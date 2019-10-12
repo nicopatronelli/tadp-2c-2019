@@ -5,6 +5,7 @@ module PersistentObject
   attr_reader :id
 
   def save!
+    validate!
     _save_has_one_fields
     _save_has_many_fields
   end
@@ -24,8 +25,8 @@ module PersistentObject
   end
 
   def validate!
-    _validate_simple_types(self.class.has_one_fields)
-    _validate_complex_types(self.class.has_many_fields)
+    _validate_simple_types
+    _validate_complex_types
   end
 
   def was_persisted?
@@ -34,25 +35,34 @@ module PersistentObject
 
   private
 
-  def _validate_simple_types(hash)
-    hash.each do |variable, variable_class|
-      element = self.instance_variable_get("@#{variable}") #send(variable) ##### instance varible get
-      if element.class != variable_class
-        raise RuntimeError, "#{variable} no es un #{variable_class}"
-      end
-      element.validate!
+  def _validate_simple_types
+    self.class.has_one_fields.each do |variable, variable_class|
+      _check_default(variable)
+      value = self.instance_variable_get("@#{variable}")
+      _check_type(value, variable_class)
+      self.class.validations[variable].each { |validation_method| validation_method.call(value) }
     end
   end
 
-  def _validate_complex_types(hash)
-    hash.each do |array_variable, variable_class|
-      array_variable.each do |element|
-        if element.class != variable_class
-          raise RuntimeError, "#{array_variable} no es un #{variable_class}"
-        end
-        element.validate!
+  def _validate_complex_types
+    self.class.has_many_fields.each do |array_variable, variable_class|
+      _check_default(array_variable)
+      array = self.instance_variable_get("@#{array_variable}")
+      array.each do |element|
+        _check_type(element, variable_class)
+        self.class.validations[array_variable].each { |validation_method| validation_method.call(element) }
       end
     end
+  end
+
+  def _check_default(attr_name)
+    value = self.instance_variable_get("@#{attr_name}")
+    self.instance_variable_set("@#{attr_name}", self.class.defaults[attr_name]) if value.nil?
+  end
+
+  def _check_type(object, klass)
+    raise RuntimeError, "#{object.class}(#{object.to_s}) no es un #{klass}" unless object.nil? || object.is_a?(klass)
+    object.validate!
   end
 
   def _save_has_one_fields
@@ -61,22 +71,13 @@ module PersistentObject
     __insert_row_in_table(has_one_hash)
   end
 
+  def _save_has_many_fields
+    self.class.has_many_fields.each { |variable, variable_class| __save_array_attribute(variable, variable_class) }
+  end
+
   def __save_single_attribute(attr_name, row_hash)
     value = self.instance_variable_get("@#{attr_name}")
     __save_and_push(attr_name.to_sym, value, row_hash)
-  end
-
-  def __insert_row_in_table(hash_row)
-    if was_persisted?
-      hash_row[:id] = self.id
-      self.class.table.update(self.id, hash_row)
-    else
-      @id = self.class.table.insert(hash_row)
-    end
-  end
-
-  def _save_has_many_fields
-    self.class.has_many_fields.each { |variable, variable_class| __save_array_attribute(variable, variable_class) }
   end
 
   def __save_array_attribute(attr_name, type)
@@ -91,22 +92,31 @@ module PersistentObject
     end
   end
 
+  def __insert_row_in_table(hash_row)
+    if was_persisted?
+      hash_row[:id] = self.id
+      self.class.table.update(self.id, hash_row)
+    else
+      @id = self.class.table.insert(hash_row)
+    end
+  end
+
   def __save_and_push(key, value, hash)
     value.save! # En caso de que sea un objeto persistible lo persisto
-    hash[key] = value.id # Si no es un objeto persistible retorna el mismo objeto
+    hash[key] = value.id unless value.nil? # Si no es un objeto persistible retorna el mismo objeto
   end
 
   def _refresh_has_one_fields
     self.class.has_one_fields.each { |variable, variable_class| __reset_single_attribute(variable, variable_class) }
   end
 
+  def _refresh_has_many_fields
+    self.class.has_many_fields.each { |variable, items_class| __reset_array_attribute(variable, items_class) }
+  end
+
   def __reset_single_attribute(attr_name, type)
     row_hash = self.class.table.entries.find { |element| element[:id] == self.id  }
     self.instance_variable_set("@#{attr_name}", __convert_id_to_object(type, row_hash[attr_name]))
-  end
-
-  def _refresh_has_many_fields
-    self.class.has_many_fields.each { |variable, items_class| __reset_array_attribute(variable, items_class) }
   end
 
   def __reset_array_attribute(attr_name, type)
@@ -123,8 +133,6 @@ end
 
 
 module PersistentModule
-  @has_one_fields
-  @has_many_fields
 
   def has_one_fields
     @has_one_fields ||= Hash.new
@@ -134,21 +142,33 @@ module PersistentModule
     @has_many_fields ||= Hash.new
   end
 
+  def validations
+    @validations ||= Hash.new
+  end
+
+  def defaults
+    @defaults ||= Hash.new
+  end
+
   def has_one(type, description)
+    _set_default_value(description[:named], description[:default])
     _set_new_attribute(description[:named], type, has_one_fields)
+    _set_attribute_validations(description[:named], description)
   end
 
   def has_many(type, description)
+    _set_default_value(description[:named], description[:default])
     _set_new_attribute(description[:named], type, has_many_fields)
+    _set_attribute_validations(description[:named], description)
   end
 
   def all_instances
-    self_entries = []
+    instances = []
     if self.is_a? Class
-      self_entries = self.table.entries.map { |hash_entity| get_object_from_id(hash_entity[:id]) }
+      instances = self.table.entries.map { |hash_entity| get_object_from_id(hash_entity[:id]) }
     end
-    _add_descendants_instances_to self_entries
-    self_entries
+    _add_descendants_instances_to instances
+    instances
   end
 
   def find_by(function, return_value)
@@ -157,6 +177,13 @@ module PersistentModule
 
   def search_by_id(id)
     find_by(:id, id)
+  end
+
+  def get_object_from_id(id)
+    object = self.new
+    object.instance_variable_set("@id", id)
+    object.refresh!
+    object
   end
 
   def method_missing(symbol, *args, &block)
@@ -172,35 +199,44 @@ module PersistentModule
     sym.to_s.start_with?("search_by_") || super
   end
 
-  def merge_has_one_fields(fields)
-    @has_one_fields = self.has_one_fields.merge(fields)
-  end
-
-  def merge_has_many_fields(fields)
-    @has_many_fields = self.has_many_fields.merge(fields)
-  end
-
-  def descendants
-    ObjectSpace.each_object(Class).select { |klass| klass < self }
+  def merge_fields_with_attr(attr_name, fields)
+    merge_hash = self.send(attr_name.to_sym).merge(fields)
+    self.instance_variable_set("@#{attr_name}", merge_hash)
   end
 
   def table
     TADB::DB.table self
   end
 
-  def get_object_from_id(id)
-    object = self.new
-    object.instance_variable_set("@id", id)
-    object.refresh!
-    object
+  def joint_table(type)
+    TADB::DB.table"#{self}_#{type}"
   end
 
   private
 
+  def _set_default_value(attr_name, default_value)
+    defaults[attr_name] = default_value
+  end
+
   def _set_new_attribute(attr_name, type, attributes_hash)
     attr_symbol = attr_name.to_sym
-    attr_accessor attr_symbol
+    attr_reader_with_default attr_symbol, self.defaults[attr_name]
+    attr_writer attr_symbol
     attributes_hash[attr_symbol] = type
+  end
+
+  def attr_reader_with_default(attr_symbol, default_value=nil)
+    self.define_method(attr_symbol) do
+      self.instance_variable_get("@#{attr_symbol.to_s}") || self.instance_variable_set("@#{attr_symbol.to_s}", default_value)
+    end
+  end
+
+  def _set_attribute_validations(attr_name, hash_validations)
+    validations[attr_name] = []
+    hash_validations.each do |constraint, value|
+      proc = Validator.new.method(constraint).curry.call(value)
+      validations[attr_name].push(proc)
+    end
   end
 
   def _add_descendants_instances_to(instances_array)
@@ -214,6 +250,10 @@ module PersistentModule
     end
   end
 
+  def descendants
+    ObjectSpace.each_object(Class).select { |klass| klass < self && !klass.to_s.start_with?("#") }
+  end
+
 end
 
 module Entity
@@ -222,20 +262,19 @@ module Entity
   def self.extended(base)
     ancestors = base.ancestors.select { |ancestor| (ancestor.is_a? PersistentModule) || (ancestor.is_a? Persistent) }
     ancestors.delete(base)
-    ancestors.each do |ancestor|
-      base.merge_has_one_fields(ancestor.has_one_fields)
-      base.merge_has_many_fields(ancestor.has_many_fields)
-    end
+    ancestors.each { |ancestor| base.merge_attr(ancestor, base) }
   end
 
   # Sobreescribe el metodo inherited en la clase que incluya el mixin
   def inherited(subclass)
-    subclass.merge_has_one_fields(self.has_one_fields)
-    subclass.merge_has_many_fields(self.has_many_fields)
+    self.merge_attr(self, subclass)
   end
 
-  def joint_table(type)
-    TADB::DB.table"#{self}_#{type}"
+  def merge_attr(from, to)
+    to.merge_fields_with_attr("has_one_fields", from.has_one_fields)
+    to.merge_fields_with_attr("has_many_fields", from.has_many_fields)
+    to.merge_fields_with_attr("validations", from.validations)
+    to.merge_fields_with_attr("defaults", from.defaults)
   end
 
 end
@@ -247,4 +286,31 @@ module Persistent
     base.extend Entity # incluye los metodos del module como metodos de clase (dentro de la singleton_class/autoclase)
   end
 end
+
+class Validator
+  def no_blank(activated, object)
+    raise RuntimeError, "El atributo no puede ser nil o estar vacio" if activated && (object.nil? || object == "")
+    self
+  end
+
+  def from(from, number)
+    raise RuntimeError, "#{number} es menor que #{from}" if number < from
+    self
+  end
+
+  def to(to, number)
+    raise RuntimeError, "#{number} es mayor que #{to}" if number > to
+    self
+  end
+
+  def validate(block, object)
+    raise RuntimeError, "El atributo es rechazado por el bloque" unless object.instance_eval(&block)
+    self
+  end
+
+  # Si se solicita una validacion no definida lo ignora
+  def method_missing(symbol, *args, &block) self end
+  def respond_to_missing?(sym, priv = false) true end
+end
+
 
