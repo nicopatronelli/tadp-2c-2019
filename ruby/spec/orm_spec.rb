@@ -35,9 +35,9 @@ describe 'orm_test' do
     estudiante_ayudante = AssistantProfessor.new
     estudiante_ayudante.fullname = "Diego Maradona"
     estudiante_ayudante.grade = Grade.new
-    estudiante_ayudante.grade.value = 1
+    estudiante_ayudante.grade.value = 2
     estudiante_ayudante.grades.push(Grade.new)
-    estudiante_ayudante.grades.last.value = 1
+    estudiante_ayudante.grades.last.value = 2
     estudiante_ayudante.type = "Ayudante TP"
     estudiante_ayudante
   }
@@ -126,8 +126,66 @@ describe 'orm_test' do
       estudiantes = [estudiante, estudiante_con_una_nota, estudiante_ayudante]
       nombres = estudiantes.map { |student| student.fullname }
       estudiantes.each { |student| student.save! }
-      expect(Person.all_instances.map { |student| student.fullname }).to match_array(nombres)
+      nombres_persistidos = Person.all_instances.map { |student| student.fullname }
+      expect(nombres_persistidos).to match_array(nombres)
     end
   end
 
-end
+  context 'cuando intento persistir un objeto con un atributo de tipo distinto al declarado' do
+    it 'lanza una excepcion' do
+      estudiante.grade = nil
+      estudiante.save!
+      estudiante.grade = Grade.new
+      estudiante.grade.value = "string invalido"
+      expect{ estudiante.save! }.to raise_error(RuntimeError)
+      estudiante.grade = Grade.new
+      estudiante.grade.value = 0
+      estudiante.fullname = 5
+      expect{ estudiante.save! }.to raise_error(RuntimeError)
+    end
+  end
+
+  context 'cuando persisto un objeto con validaciones' do
+    it 'lanza una excepcion si tiene atributos en blanco' do
+      grade = Grade.new
+      grade.value = nil
+      expect{ grade.save! }.to raise_error(RuntimeError)
+      estudiante.fullname = ""
+      expect{ estudiante.save! }.to raise_error(RuntimeError)
+    end
+
+    it 'lanza una excepcion si un numero esta fuera del rango' do
+      grade = Grade.new
+      grade.value = 10
+      grade.save!
+      grade.value = -1
+      expect{ grade.save! }.to raise_error(RuntimeError)
+      grade.value = 11
+      expect{ grade.save! }.to raise_error(RuntimeError)
+    end
+
+    it 'lanza una excepcion si la validacion del bloque falla' do
+      college = College.new
+      college.name = "BA"
+      estudiante.college = college
+      expect{ estudiante.save! }.to raise_error(RuntimeError)
+    end
+
+    it 'lanza una excepcion si algun elemento de la lista no cumple la validacion' do
+      estudiante.save!
+      estudiante.grades.last.value = 1
+      expect{ estudiante.save! }.to raise_error(RuntimeError)
+    end
+  end
+
+  context 'cuando persisto un objeto con un valor default' do
+    it 'se persiste con el valor indicado si esta seteado en nil' do
+      college = College.new
+      expect(college.name).to eq("MIT")
+      college.name = nil
+      college.save!
+      expect(college.name).to eq("MIT")
+    end
+  end
+
+  end
