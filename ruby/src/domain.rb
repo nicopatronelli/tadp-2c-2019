@@ -1,4 +1,4 @@
-require_relative '../src/orm'
+require_relative '../src/persistent'
 
 #
 # DOMAIN
