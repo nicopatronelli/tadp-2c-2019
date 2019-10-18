@@ -1,8 +1,10 @@
-require_relative 'ModuleValidations'
-require_relative 'ValidationExceptions'
-require_relative 'OpenSymbol'
+require_relative '../ModuleValidations'
+require_relative '../ValidationExceptions'
+require_relative '../OpenSymbol'
+require_relative '../ModuleBoolean'
+require 'tadb'
 
-class AtributoPersistible
+class PrimitiveAttribute
   include Validations
   attr_reader :named, :type, :validations
 
@@ -22,16 +24,33 @@ class AtributoPersistible
     @validations = hash
   end
 
-  def validate_type!(an_instance)
-    if named != :id # No validamos el atributo id porque es propio del ORM, el usuario no puede setearlo (no existe para él)
-      raise TypeValidationError.new(self, attr_value(an_instance).class) unless attr_value(an_instance).class.ancestors.include? self.type
-    end
-  end
-
-  def set_default_value(an_instance)
+  def set_default_value(an_instance) #OK
     actual_value = an_instance.instance_variable_get(named.to_attr)
     if actual_value.nil?
       an_instance.instance_variable_set(named.to_attr, @default_value)
     end
   end
+
+  def validate_type!(an_instance) #OK
+    if named != :id # No validamos el atributo id porque es propio del ORM, el usuario no puede setearlo (no existe para él)
+      raise TypeValidationError.new(self, attr_value(an_instance).class) unless attr_value(an_instance).class.ancestors.include? self.type
+    end
+  end
+
+  # Se llama en table.insert
+  def save_attr!(an_instance, attr_persistibles_hash)
+    attr_persistibles_hash[named] = an_instance.instance_variable_get(named.to_attr)
+  end
+
+  # Se llama en table.all_entries
+  def load_attr(an_instance, entry)
+    an_instance.instance_variable_set(named.to_attr, entry[named])
+  end
+
+  def delete!(an_instance)
+    # Do nothing: Los atributos primitivos estan en el mismo registro que charmander, así que se borran
+    # automáticamente al borrar charmander (I), no necesito darles un tratamiento especial
+    # ni cascadear el borrado
+  end
+
 end

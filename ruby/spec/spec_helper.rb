@@ -1,2 +1,3 @@
 require 'rspec'
-require_relative 'Pokemon'
+require_relative '../src/ValidationExceptions'
+require_relative 'test_classes'

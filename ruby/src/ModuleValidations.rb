@@ -1,12 +1,17 @@
+require_relative 'OpenSymbol'
+
+# Para un atributo primitivo, valen todas las validaciones.
+# Para un atributo complejo, solo validate (además de default, que no es una validacion)
+# Para un atributo compuesto (de has_many), solo validate (además de default, que no es una validacion)
+# Nota: Para atributo complejo y compuesto también podría valer no_blank
 module Validations
-  private
   # Dentro de los métodos, self es la instancia de la clase que hace include de Validations:
   # en nuestro caso, es precisamente un atributo persistible (instancia de AtributoPersistible)
-  # OBS1: Una validación pasa si retorna true y falla si retorna false.
-  # OBS2: La aridad de todos los métodos validadores es la misma: reciben por parámetro la instancia
-  # que se está queriendo persistir (por ejemplo, pikachu)
+  private
+
   def attr_value(an_instance) # Método auxiliar
-    an_instance.instance_variable_get("@" + self.named.to_s)
+    #an_instance.instance_variable_get("@" + self.named.to_s)
+    an_instance.instance_variable_get(named.to_attr)
   end
 
   def from(val_arg, an_instance)
