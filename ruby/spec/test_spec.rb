@@ -1,7 +1,4 @@
 describe "Tests TADP Metaprogramacion ORM" do
-  before(:each) do
-    #Pokemon.table.clear
-  end
 
   describe 'has_one' do
     it 'genera accessors para los atributos persistibles' do
@@ -39,10 +36,8 @@ describe "Tests TADP Metaprogramacion ORM" do
 
     it 'me sabe decir los nombres (simbolos) de sus atributos persistibles' do
       # match_array no se preocupa por el orden de los elementos en el array
-      expect(Pikachu.attr_persistibles_symbols).to match_array([:id, :level, :evolution, :wild])
+      expect(Pikachu.attr_persistibles_symbols(true)).to match_array([:id, :level, :evolution, :wild])
     end
-
-
 
     it 'NO entiende los mensajes de instancia save!, refresh! y forget!' do
       expect{Pikachu.save!}.to raise_exception(NoMethodError)
@@ -273,7 +268,7 @@ describe "Tests TADP Metaprogramacion ORM" do
     it 'se lanza la excepcion ValidateBlockError cuando un atributo con la
       validacion validate no satisface el bloque pasado por parametro' do
       # has_one Integer, ..., validate: proc{level * 2 > 25}
-      pikachu.level = 10 # 20 < 25 -> No cumple el bloque
+      pikachu.level = 11 # 22 < 25 -> No cumple el bloque
       expect{pikachu.validate!}.to raise_exception(ValidateBlockError)
       pikachu.level = 25 # 50 > 25 -> Pasa el bloque
       expect(pikachu.validate!).to eq true
@@ -283,106 +278,6 @@ describe "Tests TADP Metaprogramacion ORM" do
       pikachu.level = nil
       pikachu.validate!
       expect(pikachu.level).to eq 15
-    end
-  end
-
-  ######################################################################################
-  ######################################################################################
-
-  describe "Herencia entre tipos" do
-    xit 'should ' do
-      class Monstruito
-        extend Persistible
-        has_one Integer, named: :level
-      end
-
-      # class Pikachu < Monstruito
-      #   extend Persistible
-      #   has_one String, named: :evolution
-      # end
-
-      #expect(Pikachu.attr_persistibles_symbols).to eq [:id, :level, :evolution]
-      pikachu = Pikachu.new
-      pikachu.level = 25
-      pikachu.evolution = "Raichu"
-      pikachu.save!
-    end
-  end
-
-
-  # class C
-  #   extend Persistible
-  #   has_one String, named: :value
-  # end
-  #
-  # class A
-  #   extend Persistible
-  #   has_one String, named: :value
-  # end
-  #
-  # class B
-  #   extend Persistible
-  #   has_one A, named: :myA
-  # end
-
-  describe "Test para el requerimiento 3: Relaciones entre objetos"do
-    it 'se valida el tipo de un objeto complejo' do
-      class C
-        extend Persistible
-        has_one String, named: :value
-      end
-
-      class A
-        extend Persistible
-        has_one String, named: :value
-      end
-
-      class B
-        extend Persistible
-        has_one A, named: :myA
-      end
-
-      b = B.new
-      b.myA = C.new # B se compone de A y le estoy instanciando un C
-      b.myA.value = "Un valor de A" # value se declara como Integer en A pero le seteo un String
-      expect{b.validate!}.to raise_exception(TypeValidationError)
-    end
-
-    it 'Se valida en cascada un objeto complejo' do
-      class A
-        extend Persistible
-        has_one Integer, named: :value
-      end
-
-      class B
-        extend Persistible
-        has_one A, named: :myA
-      end
-
-      b = B.new
-      b.myA = A.new
-      b.myA.value = "Un valor de A" # value se declara como Integer en A pero le seteo un String
-      expect{b.validate!}.to raise_exception(TypeValidationError)
-    end
-
-    it 'se valida en cascada un objeto compuesto (colección)' do
-      class A
-        extend Persistible
-        has_one String, named: :value
-      end
-
-      class B
-        extend Persistible
-        has_many A, named: :severalA
-      end
-
-      b = B.new
-      a1 = A.new
-      a1.value = "Una A"
-      a2 = A.new
-      a2.value = 25 # A.value es de tipo String y le seteo un Integer
-      b.severalA = [a1, a2]
-      expect{b.validate!}.to raise_exception(TypeValidationError)
     end
   end
 

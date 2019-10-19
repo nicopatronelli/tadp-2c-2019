@@ -1,22 +1,20 @@
-require_relative 'OpenSymbol'
-# Define métodos y atributos de instancia de una clase persistible
-module Crud
+require_relative 'open_classes/OpenSymbol'
+
+module Crud # Define métodos y atributos de instancia de una clase persistible
   attr_reader :id # El atributo @id es a nivel instancia (no clase)
 
   def save!
     validate!
-    if !self.class.exists_id? id # Si no existe el id, entonces inserto un nuevo registro ...
+    if not self.class.exists_id? id # Si no existe el id, entonces inserto un nuevo registro ...
       self.class.table.insert(self)
     else # ... y si existe el id, entonces es un update
-      update!
+      _update!
     end
   end
 
   def refresh!
-    # Chequeamos que el objeto haya sido persistido antes
     if self.class.exists_id? id
-      # Obtenemos la versión más reciente de la instancia guardada en disco
-      last_saved_instance = self.class.table.read(self.id)
+      last_saved_instance = self.class.table.read(self.id) # Obtenemos la versión más reciente de la instancia guardada en disco
       self.class.all_attr_persistibles.each do |attr|
         self.instance_variable_set(attr.named.to_attr, last_saved_instance.send(attr.named))
       end
@@ -32,21 +30,17 @@ module Crud
 
   def validate!
     self.class.all_attr_persistibles.each do |attr| # Por cada atributo persistible ...
-      # 1ero cargamos el valor por default (si corresponde)
-      attr.set_default_value(self)
-      # 2do validamos que el tipo del atributo coincida con el declarado
-      attr.validate_type!(self)
-      # 3ero, chequeamos el resto de las validaciones que posea el atributo
-      attr.validations.each do |validation_name, validation_arg|
-        # level.send(:to, 100, pikachu.instance_variable_get(:level))
+      attr.set_default_value(self) # 1ero cargamos el valor por default (si corresponde)
+      attr.validate_type!(self) # 2do validamos que el tipo del atributo coincida con el declarado
+      attr.validations.each do |validation_name, validation_arg| # 3ero, chequeamos el resto de las validaciones que posea el atributo
         attr.send(validation_name, validation_arg, self)
       end
     end
-    return true # Si paso todas las validaciones (no lanzó una excepción) retorno true
+    return true # Paso todas las validaciones
   end
 
   #private
-  def update!
+  def _update!
     forget!
     save!
   end
