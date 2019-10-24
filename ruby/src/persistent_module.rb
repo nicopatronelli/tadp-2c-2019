@@ -1,4 +1,5 @@
 require_relative 'help/require_module_persistible'
+require_relative 'persistent'
 
 # Metodos de clase
 module Persistible # Una clase es persistible si extiende el modulo Persistible
@@ -10,17 +11,20 @@ module Persistible # Una clase es persistible si extiende el modulo Persistible
   end
 
   def has_one(type, hash_info_attr)
-    _prepare_to_add_attr_persistible(hash_info_attr)
+    _create_accessors(hash_info_attr[:named])
     if _is_primitive?(type)
-      attr_persistibles.push(PrimitiveAttribute.new(type, hash_info_attr))
+      primitive_attr = PrimitiveAttribute.new(type, hash_info_attr)
+      attr_persistibles.merge!({primitive_attr.named => primitive_attr})
     else
-      attr_persistibles.push(ComplexAttribute.new(type, hash_info_attr))
+      complex_attr = ComplexAttribute.new(type, hash_info_attr)
+      attr_persistibles.merge!({complex_attr.named => complex_attr})
     end
   end
 
   def has_many(type, hash_info_attr)
-    _prepare_to_add_attr_persistible(hash_info_attr)
-    attr_persistibles.push(CompoundAttribute.new(type, hash_info_attr))
+    _create_accessors(hash_info_attr[:named])
+    compound_attr = CompoundAttribute.new(type, hash_info_attr)
+    attr_persistibles.merge!({compound_attr.named => compound_attr})
   end
 
   def all_instances
@@ -31,39 +35,30 @@ module Persistible # Una clase es persistible si extiende el modulo Persistible
     @attr_persistibles
   end
 
-  # Si all es true (por defecto) se retornan TODOS los atributos persistibles de la clase,
-  # incluyendo los que provienen de sus ancestros (por herencia y mixines). Si es all es
-  # false se retornan solo los atributos persistibles declarados en la propia clase.
-  def all_attr_persistibles(all = true) #OK
-    if all
-      attr_persistibles_all = attr_persistibles
-      # Si la superclase hace extend ModulePersistible entonces ya responde a :attr_persistibles,
-      # pero puede que no tenga ningun atributo persistible (marcado con has_one), en cuyo caso
-      # retornará nil, así que debemos preguntar primero. Nunca puede retornar [].
-      ancesorts_list = ancestors.drop(1) # Descarto la singleton class
-      i = 0
-      while ancesorts_list[i].respond_to? :attr_persistibles
-        if not ancesorts_list[i].attr_persistibles.nil? # Si es nil, entonces no tiene atributos persistibles
-          attr_persistibles_all += ancesorts_list[i].attr_persistibles.select do |attr_ancestor|
-            not attr_persistibles_symbols.include? attr_ancestor.named
-          end
-        end
-        i = i + 1
+  def all_attr_persistibles
+    attr_persistibles_all = attr_persistibles
+    # Si la superclase hace extend ModulePersistible entonces ya responde a :attr_persistibles,
+    # pero puede que no tenga ningun atributo persistible (marcado con has_one), en cuyo caso
+    # retornará nil, así que debemos preguntar primero. Nunca puede retornar [].
+    ancesorts_list = ancestors.drop(1) # Descarto la singleton class
+    i = 0
+    while ancesorts_list[i].include? Persistent
+      unless ancesorts_list[i].attr_persistibles.nil? # Si es nil, entonces no tiene atributos persistibles
+        attr_persistibles_all.merge!(ancesorts_list[i].attr_persistibles)
       end
-      attr_persistibles_all
-    else
-      attr_persistibles
+      i = i + 1
     end
+    attr_persistibles_all
   end
 
   def all_attr_persistables_simples
-    all_attr_persistibles.select do |attr|
+    all_attr_persistibles.select do |key, attr|
       (attr.is_a? PrimitiveAttribute) || (attr.is_a? ComplexAttribute)
     end
   end
 
   def all_attr_persistables_compounds
-    all_attr_persistibles.select {|attr| attr.is_a? CompoundAttribute}
+    all_attr_persistibles.select {|key, attr| attr.is_a? CompoundAttribute}
   end
 
   # find_by_<message>(condition)
@@ -84,7 +79,7 @@ module Persistible # Una clase es persistible si extiende el modulo Persistible
   end
 
   def attr_persistibles_symbols(all=false)
-    all ? all_attr_persistibles.map {|attr| attr.named} : attr_persistibles.map {|attr| attr.named}
+    all ? all_attr_persistibles.map {|key, attr| key} : attr_persistibles.map {|key, attr| key}
   end
 
   def exists_id?(id)
@@ -96,30 +91,17 @@ module Persistible # Una clase es persistible si extiende el modulo Persistible
     type == String || type.ancestors.include?(Numeric) || type.ancestors.include?(Boolean)
   end
 
-  def _prepare_to_add_attr_persistible(hash_info_attr)
-    attr_named = hash_info_attr[:named]
-    create_accessors(attr_named)
-    delete_attribute_if_already_exists(attr_named)
-  end
-
-  def create_accessors(attr_named)
+  def _create_accessors(attr_named)
     attr_accessor attr_named
   end
 
-  def delete_attribute_if_already_exists(attr_named)
-    # Si ya se definio un atributo con ese nombre en la MISMA CLASE, lo eliminamos (prevalece el más reciente)
-    if attr_persistibles_symbols.include? attr_named
-      @attr_persistibles.select! { |attr| attr.named != attr_named }
-    end
-  end
-
-  def _create_table_class # OK
+  def _create_table_class
     @table = Table.new(self) # Instancio mi clase Table (es un wrapper de Table de TADB)
   end
 
   def _init_persistables_attr
-    @attr_persistibles = [] # Atributo de la clase persistible (no de las instancias)
+    @attr_persistibles = {} # Atributo de la clase persistible (no de las instancias)
     #Agregamos @id como atributo persistible
-    @attr_persistibles.push(PrimitiveAttribute.new(String, {named: :id}))
+    @attr_persistibles[:id] = (PrimitiveAttribute.new(String, {named: :id}))
   end
 end

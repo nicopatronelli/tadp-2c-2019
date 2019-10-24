@@ -16,7 +16,7 @@ module PersistentObject # Define métodos y atributos de instancia de una clase 
   def refresh!
     if was_persisted?
       last_saved_instance = self.class.table.read(self.id) # Obtenemos la versión más reciente de la instancia guardada en disco
-      self.class.all_attr_persistibles.each do |attr|
+      self.class.all_attr_persistibles.each do |key, attr|
         self.instance_variable_set(attr.named.to_attr, last_saved_instance.send(attr.named))
       end
     else
@@ -30,7 +30,7 @@ module PersistentObject # Define métodos y atributos de instancia de una clase 
   end
 
   def validate!
-    self.class.all_attr_persistibles.each do |attr| # Por cada atributo persistible ...
+    self.class.all_attr_persistibles.each do |key, attr| # Por cada atributo persistible ...
       attr.set_default_value(self) # 1ero cargamos el valor por default (si corresponde)
       attr.validate_type!(self) # 2do validamos que el tipo del atributo coincida con el declarado
       attr.validations.each do |validation_name, validation_arg| # 3ero, chequeamos el resto de las validaciones que posea el atributo
@@ -47,7 +47,6 @@ module PersistentObject # Define métodos y atributos de instancia de una clase 
   end
 
   private
-
   def was_persisted?
     self.class.exists_id? id
   end

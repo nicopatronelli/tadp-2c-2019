@@ -36,7 +36,7 @@ describe "Tests TADP Metaprogramacion ORM" do
 
     it 'me sabe decir los nombres (simbolos) de sus atributos persistibles' do
       # match_array no se preocupa por el orden de los elementos en el array
-      expect(Pikachu.attr_persistibles_symbols(true)).to match_array([:id, :level, :evolution, :wild])
+      expect(Pikachu.attr_persistibles_symbols).to match_array([:id, :level, :evolution, :wild])
     end
 
     it 'NO entiende los mensajes de instancia save!, refresh! y forget!' do
@@ -57,6 +57,8 @@ describe "Tests TADP Metaprogramacion ORM" do
       Evolution.table.clear
       Pidgeotto.table.clear
       Attack.table.clear
+      Snorlax.table.clear
+      Mewtwo.table.clear
     end
 
     it 'le asigna un id a la instancia salvada' do
@@ -68,14 +70,13 @@ describe "Tests TADP Metaprogramacion ORM" do
     end
 
     it 'persiste instancias de una clase persistible con atributos primitivos' do
-      mi_clase = Class.new do
-        def asdf
-
-        end
-      end
-
-      mi_clase.new
-
+      # mi_clase = Class.new do
+      #   def asdf
+      #
+      #   end
+      # end
+      #
+      # mi_clase.new
       expect(Squartle.all_instances.size).to eq 0 # No hay registros en la tabla Squartle
       squartle = Squartle.new
       squartle.level = 25
@@ -115,7 +116,27 @@ describe "Tests TADP Metaprogramacion ORM" do
       expect(tornado_saved.name).to eq tornado.name
     end
 
-    it 'funciona como update! si el objeto ya se encuentra persistido' do
+    it 'persiste instancias de una clase persistible con atributos heredados' do
+      snorlax = Snorlax.new
+      snorlax.level = 40
+      snorlax.evolution = "None"
+      snorlax.wild = true
+      snorlax.type = "Normal"
+      snorlax.sleep_time = 120
+      snorlax.save!
+      expect(Snorlax.all_instances.size).to eq 1
+      snorlax_saved = Snorlax.find_by_id(snorlax.id).first
+      expect(snorlax_saved.level).to eq snorlax.level
+    end
+
+    it 'persiste instancias de una clase persistible con atributos incluidos (por mixin)' do
+      mewtwo = Mewtwo.new
+      mewtwo.wild = false
+      mewtwo.concentration_level = 1050
+      mewtwo.save!
+      expect(Mewtwo.all_instances.size).to eq 1
+      mewtwo_saved = Mewtwo.find_by_id(mewtwo.id).first
+      expect(mewtwo_saved.concentration_level).to eq mewtwo.concentration_level
     end
 
   end
@@ -288,5 +309,4 @@ describe "Tests TADP Metaprogramacion ORM" do
       expect(pikachu.level).to eq 15
     end
   end
-
 end

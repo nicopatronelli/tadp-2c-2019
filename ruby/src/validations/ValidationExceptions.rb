@@ -37,18 +37,6 @@ class NoBlankValidationError < ValidationError
   end
 end
 
-# class DefaultValidationError < StandardError
-#   def initialize(attr_named, val_arg, attr_value)
-#     @attr_named = attr_named
-#     @val_arg = val_arg
-#     @attr_value = attr_value
-#   end
-#
-#   def message
-#     "En #{@attr_named}: Se ha seteado el atributo como cadena vacía"
-#   end
-# end
-
 class NotEqualToValidationError < ValidationError
   def message
     "En #{@attr_named}: No se puede setear el valor #{@val_arg}"

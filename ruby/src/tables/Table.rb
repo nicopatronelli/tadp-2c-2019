@@ -15,7 +15,7 @@ class Table
   def insert_instance(an_instance)
     # Me armo el hash con los atributos persistibles SIMPLES (has_one) y después lo inserto
     attr_persistibles_hash = {}
-    an_instance.class.all_attr_persistables_simples.each do |attr|
+    an_instance.class.all_attr_persistables_simples.each do |key, attr|
         attr.save_attr!(an_instance, attr_persistibles_hash)
       end
     id = real_table.insert(attr_persistibles_hash) # Retorna el id asignado al insertar
@@ -25,7 +25,7 @@ class Table
 
   # Inserta un atributo de tipo colección cascadeando
   def insert_collection(an_instance, id_instance)
-    an_instance.class.all_attr_persistables_compounds.each do |attr|
+    an_instance.class.all_attr_persistables_compounds.each do |key, attr|
       sub_instances = an_instance.instance_variable_get(attr.named.to_attr)
       # Paso sub_instances.first para poder obtener el tipo de la colección
       intermediate_ids_var_name = attr.set_intermediate_ids_var(an_instance, sub_instances.first)
@@ -55,7 +55,7 @@ class Table
     # Asumiendo que la clase persistible tiene constructor sin parámetros
     real_table.entries.map do |entry| # entry es un hash atributoPersistible-valor
       an_instance = table_class.new # Creo una nueva instancia del objeto
-      an_instance.class.all_attr_persistibles.each do |attr|
+      an_instance.class.all_attr_persistibles.each do |key, attr|
         attr.load_attr(an_instance, entry)
       end
       an_instance
@@ -63,7 +63,7 @@ class Table
   end
 
   def delete!(an_instance)
-    an_instance.class.all_attr_persistibles.each {|attr| attr.delete!(an_instance)}
+    an_instance.class.all_attr_persistibles.each {|key, attr| attr.delete!(an_instance)}
     real_table.delete(an_instance.instance_variable_get(:@id))
   end
 
