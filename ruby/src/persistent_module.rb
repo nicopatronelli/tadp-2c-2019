@@ -1,7 +1,13 @@
 require_relative 'help/require_module_persistible'
 
+# Metodos de clase
 module Persistible # Una clase es persistible si extiende el modulo Persistible
   attr_reader :table
+
+  def self.extended(base)
+    base._create_table_class
+    base._init_persistables_attr
+  end
 
   def has_one(type, hash_info_attr)
     _prepare_to_add_attr_persistible(hash_info_attr)
@@ -74,7 +80,7 @@ module Persistible # Una clase es persistible si extiende el modulo Persistible
   # Al hacer un override de method_missing debemos hacer un override de respond_to_missing? para
   # mantener la consistencia del mensaje respond_to?
   def respond_to_missing?(method, include_private = false) #OK
-    method.to_s.start_with? "find_by_" || super
+    (method.to_s.start_with? "find_by_") || super
   end
 
   def attr_persistibles_symbols(all=false)
@@ -82,16 +88,15 @@ module Persistible # Una clase es persistible si extiende el modulo Persistible
   end
 
   def exists_id?(id)
-    find_by_id(id) != []
+    not id.nil?
   end
 
-  private
+  #private
   def _is_primitive?(type)
     type == String || type.ancestors.include?(Numeric) || type.ancestors.include?(Boolean)
   end
 
   def _prepare_to_add_attr_persistible(hash_info_attr)
-    _init_persistible_if_neccesary
     attr_named = hash_info_attr[:named]
     create_accessors(attr_named)
     delete_attribute_if_already_exists(attr_named)
@@ -108,22 +113,13 @@ module Persistible # Una clase es persistible si extiende el modulo Persistible
     end
   end
 
-  # Initialization methods
-  def _init_persistible_if_neccesary #OK
-    if @attr_persistibles.nil?
-      _init_persistables_attr
-      include Crud # Dentro de def, self es la instancia de la clase que extiende Persistible, así que funciona
-      _create_table_class
-    end
+  def _create_table_class # OK
+    @table = Table.new(self) # Instancio mi clase Table (es un wrapper de Table de TADB)
   end
 
-  def _init_persistables_attr # OK
-    @attr_persistibles = Array.new
+  def _init_persistables_attr
+    @attr_persistibles = [] # Atributo de la clase persistible (no de las instancias)
     #Agregamos @id como atributo persistible
     @attr_persistibles.push(PrimitiveAttribute.new(String, {named: :id}))
-  end
-
-  def _create_table_class # OK
-    @table = Table.new(self) # Crea la "tabla" (json) con el nombre de la clase
   end
 end

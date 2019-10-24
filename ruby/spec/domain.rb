@@ -1,7 +1,8 @@
-require_relative '../src/ModulePersistible'
+require_relative '../src/persistent_module'
+require_relative '../src/persistent'
 
 class Pikachu
-  extend Persistible
+  include Persistent #extend Persistible
   has_one Integer, named: :level, from: 10 , to: 100, validate: proc{level * 2 > 25}, default: 15 #, not_equal_to: 20
   has_one String, named: :evolution, no_blank: true
   has_one Boolean, named: :wild
@@ -24,7 +25,6 @@ class Pikachu
     pikachu.type = "Electric"
     pikachu
   end
-
 end
 
 class Bulbasaur

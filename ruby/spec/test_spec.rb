@@ -68,6 +68,14 @@ describe "Tests TADP Metaprogramacion ORM" do
     end
 
     it 'persiste instancias de una clase persistible con atributos primitivos' do
+      mi_clase = Class.new do
+        def asdf
+
+        end
+      end
+
+      mi_clase.new
+
       expect(Squartle.all_instances.size).to eq 0 # No hay registros en la tabla Squartle
       squartle = Squartle.new
       squartle.level = 25

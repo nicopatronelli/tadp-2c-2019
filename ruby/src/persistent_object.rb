@@ -1,11 +1,12 @@
 require_relative 'open_classes/OpenSymbol'
 
-module Crud # Define métodos y atributos de instancia de una clase persistible
+# module Crud
+module PersistentObject # Define métodos y atributos de instancia de una clase persistible
   attr_reader :id # El atributo @id es a nivel instancia (no clase)
 
   def save!
     validate!
-    if not self.class.exists_id? id # Si no existe el id, entonces inserto un nuevo registro ...
+    if not was_persisted? # Si no existe el id, entonces inserto un nuevo registro ...
       self.class.table.insert(self)
     else # ... y si existe el id, entonces es un update
       _update!
@@ -13,7 +14,7 @@ module Crud # Define métodos y atributos de instancia de una clase persistible
   end
 
   def refresh!
-    if self.class.exists_id? id
+    if was_persisted?
       last_saved_instance = self.class.table.read(self.id) # Obtenemos la versión más reciente de la instancia guardada en disco
       self.class.all_attr_persistibles.each do |attr|
         self.instance_variable_set(attr.named.to_attr, last_saved_instance.send(attr.named))
@@ -43,6 +44,12 @@ module Crud # Define métodos y atributos de instancia de una clase persistible
   def _update!
     forget!
     save!
+  end
+
+  private
+
+  def was_persisted?
+    self.class.exists_id? id
   end
 
 end
