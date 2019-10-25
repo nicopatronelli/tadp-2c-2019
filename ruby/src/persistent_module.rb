@@ -40,15 +40,15 @@ module Persistible # Una clase es persistible si extiende el modulo Persistible
     # Si la superclase hace extend ModulePersistible entonces ya responde a :attr_persistibles,
     # pero puede que no tenga ningun atributo persistible (marcado con has_one), en cuyo caso
     # retornará nil, así que debemos preguntar primero. Nunca puede retornar [].
-    ancesorts_list = ancestors.drop(1) # Descarto la singleton class
-    i = 0
-    while ancesorts_list[i].include? Persistent
-      unless ancesorts_list[i].attr_persistibles.nil? # Si es nil, entonces no tiene atributos persistibles
+    ancestors_list = ancestors.drop(1) # Descarto la singleton class
+
+    ancestors_list.each do |ancestor|
+      if (ancestor.include? Persistent) && !ancestor.attr_persistibles.nil? # Si es nil, entonces no tiene atributos persistibles
         # Invertimos el orden de precedencia (se pisan los atributos más lejanos a la clase actual) -> reverse_merge
-        attr_persistibles_all.merge!(ancesorts_list[i].attr_persistibles) {|key, my_attr, ancestor_attr| my_attr }
+        attr_persistibles_all.merge!(ancestor.attr_persistibles) { |key, my_attr, ancestor_attr| my_attr }
       end
-      i = i + 1
     end
+
     attr_persistibles_all
   end
 

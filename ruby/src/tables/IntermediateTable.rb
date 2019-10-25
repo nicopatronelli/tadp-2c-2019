@@ -5,10 +5,10 @@ class IntermediateTable
     @real_table = TADB::DB.table(name)
   end
 
-  def insert(an_instance, sub_instance, id_instance, id_sub_instance)
+  def insert(an_instance, sub_instance)
     intermediate_hash = {}
-    intermediate_hash["id_" + an_instance.class.name.downcase] = id_instance
-    intermediate_hash["id_" + sub_instance.class.name.downcase] = id_sub_instance
+    intermediate_hash["id_" + an_instance.class.name.downcase] = an_instance.id
+    intermediate_hash["id_" + sub_instance.class.name.downcase] = sub_instance.id
     real_table.insert(intermediate_hash) # Retorna el id del registro insertado en la tabla intermedia
   end
 

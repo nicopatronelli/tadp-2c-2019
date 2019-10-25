@@ -3,7 +3,7 @@ require_relative '../help/require_persistable_attr'
 class PrimitiveAttribute < PersistableAttribute
   def validate_type!(an_instance) #OK
     if named != :id # No validamos el atributo id porque es propio del ORM, el usuario no puede setearlo (no existe para él)
-      raise TypeValidationError.new(self, attr_value(an_instance).class) unless attr_value(an_instance).class.ancestors.include? self.type
+      raise TypeValidationError.new(self, get_actual_value(an_instance).class) unless get_actual_value(an_instance).class.ancestors.include? self.type
     end
   end
 

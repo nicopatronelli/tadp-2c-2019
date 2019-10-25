@@ -24,7 +24,7 @@ class CompoundAttribute < PersistableAttribute
   def validate(val_arg, an_instance)
     sub_instances = get_actual_value(an_instance)
     sub_instances.each do |sub_instance|
-      raise ValidateBlockError.new(self.named, val_arg, attr_value(an_instance)) unless sub_instance.instance_eval(&val_arg)
+      raise ValidateBlockError.new(self.named, val_arg, get_actual_value(an_instance)) unless sub_instance.instance_eval(&val_arg)
     end
   end
 
@@ -45,7 +45,7 @@ class CompoundAttribute < PersistableAttribute
     reset_intermediate_ids_var(an_instance, intermediate_ids_var)
   end
 
-  def load_attr(an_instance, entry)
+  def load_attr(an_instance, _)
     # Tengo que hacer un join entre la tabla Charmander, Charmander_Attacks y Attack para traerme
     # solo los ataques (atributos complejos) de charmander
     # 1. Me traigo todas las entradas de la tabla intermedia Charmander_Attacks
@@ -87,7 +87,7 @@ class CompoundAttribute < PersistableAttribute
   private
 
   def intermediate_ids_var_name(an_instance, sub_instance)
-    intermediate_ids_var_name = "@__" + an_instance.class.name.downcase + "_" + sub_instance.class.name.downcase + "s__ids"
+    "@__" + an_instance.class.name.downcase + "_" + sub_instance.class.name.downcase + "s__ids"
   end
 
   def reset_intermediate_ids_var(an_instance, intermediate_ids_var)
