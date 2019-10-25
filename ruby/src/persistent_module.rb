@@ -44,7 +44,8 @@ module Persistible # Una clase es persistible si extiende el modulo Persistible
     i = 0
     while ancesorts_list[i].include? Persistent
       unless ancesorts_list[i].attr_persistibles.nil? # Si es nil, entonces no tiene atributos persistibles
-        attr_persistibles_all.merge!(ancesorts_list[i].attr_persistibles)
+        # Invertimos el orden de precedencia (se pisan los atributos más lejanos a la clase actual) -> reverse_merge
+        attr_persistibles_all.merge!(ancesorts_list[i].attr_persistibles) {|key, my_attr, ancestor_attr| my_attr }
       end
       i = i + 1
     end

@@ -9,7 +9,7 @@ describe "Tests TADP Metaprogramacion ORM" do
       expect(pikachu.evolution).to eq "Raichu"
     end
 
-    it 'pisa un atributo persistible ya definido' do
+    it 'pisa un atributo persistible ya definido en la misma clase' do
       bulbasaur = Bulbasaur.new
       bulbasaur.level = 20
       # Me aprovecho de la validación de tipos para testear esta funcionalidad (no encuentro otra opción)
@@ -18,6 +18,11 @@ describe "Tests TADP Metaprogramacion ORM" do
       expect{bulbasaur.validate!}.to raise_exception(TypeValidationError)
       bulbasaur.level = "20"
       expect{bulbasaur.validate!}.not_to raise_exception(TypeValidationError)
+    end
+
+    it 'pisa un atributo persistible ya definido por herencia' do
+
+
     end
   end
 

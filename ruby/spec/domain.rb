@@ -134,3 +134,4 @@ class Mewtwo
   include Psychic
   has_one Boolean, named: :wild
 end
+
