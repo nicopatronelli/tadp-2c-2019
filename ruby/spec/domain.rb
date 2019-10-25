@@ -135,3 +135,11 @@ class Mewtwo
   has_one Boolean, named: :wild
 end
 
+class Pichu
+  include Persistent
+  def initialize(level, evolution)
+    @level = level
+    @evolution = evolution
+  end
+end
+

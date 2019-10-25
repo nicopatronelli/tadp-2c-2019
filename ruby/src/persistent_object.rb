@@ -17,7 +17,9 @@ module PersistentObject # Define métodos y atributos de instancia de una clase 
     if was_persisted?
       last_saved_instance = self.class.table.read(self.id) # Obtenemos la versión más reciente de la instancia guardada en disco
       self.class.all_attr_persistibles.each do |key, attr|
-        self.instance_variable_set(attr.named.to_attr, last_saved_instance.send(attr.named))
+        self.instance_variable_set(
+            attr.named.to_attr,
+            last_saved_instance.instance_variable_get(attr.named.to_attr))
       end
     else
       raise ObjectNotPersistedError.new

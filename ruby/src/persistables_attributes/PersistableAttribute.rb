@@ -13,12 +13,10 @@ class PersistableAttribute
     # la de tipo es insalvable, ya que el método has_one requiere el tipo del atributo como primer
     # parámetro:
     #   has_one String, named: :evolution, no_blank: true
-    @named = hash_info_attr[:named]
     @type = type
+    @named = hash_info_attr[:named]
     @default_value = hash_info_attr[:default]
-    hash_info_attr.delete(:named)
-    hash_info_attr.delete(:default)
-    @validations = hash_info_attr
+    @validations = hash_info_attr.reject {|key, val| key == :named || key == :default}
   end
 
   def set_default_value(an_instance) #OK

@@ -8,8 +8,7 @@ class CompoundAttribute < PersistableAttribute
   def initialize(type, hash_info_attr)
     super(type, hash_info_attr)
     @intermediate_table = IntermediateTable.new(hash_info_attr[:intermediate_table_name]) # Creamos la tabla intermedia del atributo
-    hash_info_attr.delete(:intermediate_table_name)
-    @validations = hash_info_attr
+    @validations = hash_info_attr.reject {|key, val| key == :named || key == :default || key == :intermediate_table_name}
   end
 
   # El valor default para una coleccion (has_many) es para la colección, no para sus elementos:
@@ -62,14 +61,14 @@ class CompoundAttribute < PersistableAttribute
       entry[("id_" + type.name.downcase).to_sym]
     end
     # 4. Me armo un array con los ataques (instancias) de charmander
-    sub_instances_arr = sub_instance_ids.map do |sub_instance_id|
+    sub_instances = sub_instance_ids.map do |sub_instance_id|
       type.find_by_id(sub_instance_id).first
     end
     # 5. Seteo el array de objetos ataques a la instancia charmander
-    an_instance.instance_variable_set(named.to_attr, sub_instances_arr)
+    an_instance.instance_variable_set(named.to_attr, sub_instances)
     # Seteo la variable de instancia que tiene el array de ids intermedios para recuperar el
     # mismo objeto persistido
-    intermediate_ids_var_name = set_intermediate_ids_var(an_instance, sub_instances_arr.first)
+    intermediate_ids_var_name = set_intermediate_ids_var(an_instance, sub_instances.first)
     intermediate_ids = entries_of_an_instance.map do |entry|
       entry[:id]
     end

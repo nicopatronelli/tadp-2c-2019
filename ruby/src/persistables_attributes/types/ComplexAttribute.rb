@@ -16,8 +16,7 @@ class ComplexAttribute < PersistableAttribute
   end
 
   def load_attr(an_instance, entry)
-    instance_attr_complejo = type.new
-    instance_attr_complejo = instance_attr_complejo.class.find_by_id(entry[named]).first
+    instance_attr_complejo = type.find_by_id(entry[named]).first # type es la clase del atributo
     an_instance.instance_variable_set(named.to_attr, instance_attr_complejo)
   end
 
