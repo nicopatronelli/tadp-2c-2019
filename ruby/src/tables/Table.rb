@@ -24,7 +24,7 @@ class Table
   end
 
   # Inserta un atributo de tipo colección cascadeando
-  def insert_collection(an_instance, id_instance)
+  def insert_collection(an_instance)
     an_instance.class.all_attr_persistables_compounds.each do |key, attr|
       sub_instances = an_instance.instance_variable_get(attr.named.to_attr)
       # Paso sub_instances.first para poder obtener el tipo de la colección
@@ -32,7 +32,7 @@ class Table
       sub_instances.each do |sub_instance|
         id_sub_instance = sub_instance.save! # Llamada recursiva
         sub_instance.instance_variable_set(:@id, id_sub_instance) # Seteamos el id obtenido a la sub_instancia
-        id_intermediate = attr.intermediate_table.insert(an_instance, sub_instance, id_instance, id_sub_instance)
+        id_intermediate = attr.intermediate_table.insert(an_instance, sub_instance)
         an_instance.instance_variable_set(
             intermediate_ids_var_name,
             an_instance.instance_variable_get(intermediate_ids_var_name).push(id_intermediate))
@@ -43,7 +43,7 @@ class Table
   def insert(an_instance)
     id_instancia = insert_instance(an_instance)
     # Recién después de insertar la instancia (charmander) y obtener su id, puedo insertar en la tabla intermedia
-    insert_collection(an_instance, id_instancia)
+    insert_collection(an_instance)
     id_instancia # Retornamos el id de la instancia insertada originalmente
   end
 

@@ -4,8 +4,8 @@ class ComplexAttribute < PersistableAttribute
   def validate_type!(an_instance) #OK
     if named != :id
       # Validamos el tipo del objeto (complejo) en sí mimso
-      raise TypeValidationError.new(self, attr_value(an_instance).class) unless attr_value(an_instance).class.ancestors.include? self.type
-      attr_value(an_instance).validate! # Cascadeamos la validación
+      raise TypeValidationError.new(self, get_actual_value(an_instance).class) unless get_actual_value(an_instance).class.ancestors.include? self.type
+      get_actual_value(an_instance).validate! # Cascadeamos la validación
     end
   end
 
