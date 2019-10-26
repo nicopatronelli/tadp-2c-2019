@@ -1,4 +1,4 @@
-require_relative '../src/persistent_module'
+require_relative '../src/class_persistent_methods'
 require_relative '../src/persistent'
 
 class Pikachu
@@ -55,14 +55,14 @@ end
 
 class Pidgeotto
   include Persistent
-  has_many Attack, named: :attacks, intermediate_table_name: :Pidgeotto_Attacks
+  has_many Attack, named: :attacks
 end
 
 class Psyduck
   include Persistent
   has_one Integer, named: :level
   has_one Evolution, named: :evolution
-  has_many Attack, named: :attacks, intermediate_table_name: :Psyduck_Attacks
+  has_many Attack, named: :attacks
   attr_accessor :type
 
   def self.build_a_complete_psyduck

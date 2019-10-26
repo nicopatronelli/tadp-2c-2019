@@ -5,10 +5,11 @@ require_relative '../../open_classes/OpenString'
 class CompoundAttribute < PersistableAttribute
   attr_reader :intermediate_table
 
-  def initialize(type, hash_info_attr)
+  # class_container es la clase que está compuesta por el has_many (Pikachu)
+  def initialize(type, hash_info_attr, class_container)
     super(type, hash_info_attr)
-    @intermediate_table = IntermediateTable.new(hash_info_attr[:intermediate_table_name]) # Creamos la tabla intermedia del atributo
-    @validations = hash_info_attr.reject {|key, val| key == :named || key == :default || key == :intermediate_table_name}
+    intermediate_table_name = "#{class_container}_#{type}s" # Pikachu_Attacks
+    @intermediate_table = IntermediateTable.new(intermediate_table_name) # Creamos la tabla intermedia del atributo
   end
 
   # El valor default para una coleccion (has_many) es para la colección, no para sus elementos:

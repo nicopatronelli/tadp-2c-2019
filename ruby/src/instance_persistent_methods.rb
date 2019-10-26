@@ -1,7 +1,7 @@
 require_relative 'open_classes/OpenSymbol'
 
 # module Crud
-module PersistentObject # Define métodos y atributos de instancia de una clase persistible
+module InstancePersistentMethods # Define métodos y atributos de instancia de una clase persistible
   attr_reader :id # El atributo @id es a nivel instancia (no clase)
 
   def save!

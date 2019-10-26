@@ -2,7 +2,7 @@ require_relative 'help/require_module_persistible'
 require_relative 'persistent'
 
 # Metodos de clase
-module Persistible # Una clase es persistible si extiende el modulo Persistible
+module ClassPersistentMethods
   attr_reader :table
 
   def self.extended(base)
@@ -23,12 +23,16 @@ module Persistible # Una clase es persistible si extiende el modulo Persistible
 
   def has_many(type, hash_info_attr)
     _create_accessors(hash_info_attr[:named])
-    compound_attr = CompoundAttribute.new(type, hash_info_attr)
+    compound_attr = CompoundAttribute.new(type, hash_info_attr, self)
     attr_persistibles.merge!({compound_attr.named => compound_attr})
   end
 
   def all_instances
-    table.all_entries
+    instances = table.all_entries
+    descendants.each do |descendant|
+      instances += descendant.all_instances
+    end
+    instances
   end
 
   def attr_persistibles
@@ -41,14 +45,12 @@ module Persistible # Una clase es persistible si extiende el modulo Persistible
     # pero puede que no tenga ningun atributo persistible (marcado con has_one), en cuyo caso
     # retornará nil, así que debemos preguntar primero. Nunca puede retornar [].
     ancestors_list = ancestors.drop(1) # Descarto la singleton class
-
     ancestors_list.each do |ancestor|
       if (ancestor.include? Persistent) && !ancestor.attr_persistibles.nil? # Si es nil, entonces no tiene atributos persistibles
         # Invertimos el orden de precedencia (se pisan los atributos más lejanos a la clase actual) -> reverse_merge
         attr_persistibles_all.merge!(ancestor.attr_persistibles) { |key, my_attr, ancestor_attr| my_attr }
       end
     end
-
     attr_persistibles_all
   end
 
@@ -104,5 +106,9 @@ module Persistible # Una clase es persistible si extiende el modulo Persistible
     @attr_persistibles = {} # Atributo de la clase persistible (no de las instancias)
     #Agregamos @id como atributo persistible
     @attr_persistibles[:id] = (PrimitiveAttribute.new(String, {named: :id}))
+  end
+
+  def descendants
+    ObjectSpace.each_object(Class).select { |klass| klass < self && !klass.to_s.start_with?("#") }
   end
 end
