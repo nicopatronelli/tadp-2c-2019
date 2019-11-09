@@ -1,4 +1,5 @@
 import org.scalatest.{FreeSpec, Matchers}
+import TADPQuest._
 
 class ProjectSpec extends FreeSpec with Matchers {
 
@@ -6,7 +7,8 @@ class ProjectSpec extends FreeSpec with Matchers {
 
     "cuando está correctamente configurado" - {
       "debería resolver las dependencias y pasar este test" in {
-        Prueba.materia shouldBe "tadp"
+        val stats = new Stats
+        stats.hp shouldBe 1
       }
     }
   }
