@@ -12,7 +12,7 @@ trait Tarea { // Interfaz Tarea
 case class PelearContraMonstruo(hpAReducir: Int) extends Tarea {
   override def facilidad(heroe: Heroe, equipo: Equipo): Int = {
     heroe match {
-      case Heroe(_, Guerrero, _) if equipo.lider().contains(heroe) => 20
+      case Heroe(_,Some(Guerrero),_) if equipo.lider().contains(heroe) => 20
       case _ => 10
     }
   }
@@ -30,7 +30,7 @@ case class PelearContraMonstruo(hpAReducir: Int) extends Tarea {
 case object ForzarPuerta extends Tarea {
   override def facilidad(heroe: Heroe, equipo: Equipo): Int = {
     val cantidadDeLadrones = equipo.integrantes.map{ _.trabajo}.map{
-      case Ladron => 1
+      case Some(Ladron) => 1
       case _ => 0
     }.sum
     heroe.stats.inteligencia + 10 * cantidadDeLadrones
@@ -38,7 +38,7 @@ case object ForzarPuerta extends Tarea {
 
   override def serRealizadaPor(heroe: Heroe): Heroe = {
     heroe.trabajo match {
-      case Mago | Ladron => heroe
+      case Some(Mago) | Some(Ladron) => heroe
       case _ =>
         val nuevosStats = heroe.baseStats.copy(hp = heroe.baseStats.hp - 5, fuerza = heroe.baseStats.fuerza + 1)
         heroe.copy(baseStats = nuevosStats)
@@ -49,7 +49,7 @@ case object ForzarPuerta extends Tarea {
 case class RobarTalisman(talisman: Talisman) extends Tarea {
   override def facilidad(heroe: Heroe, equipo: Equipo): Int = {
     equipo.lider() match {
-      case Some(Heroe(_,Ladron,_)) => heroe.stats.velocidad
+      case Some(Heroe(_,Some(Ladron),_)) => heroe.stats.velocidad
       case _ => throw NoSePuedeRealizarTareaException(this)
     }
   }

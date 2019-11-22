@@ -10,7 +10,7 @@ object Taberna {
   )
   private val misionLarga = Mision(
     List(PelearContraMonstruo(10), ForzarPuerta, PelearContraMonstruo(40)),
-    NuevoHeroe(Heroe(Stats(100, 50, 60, 110), Mago, Inventario()))
+    NuevoHeroe(Heroe(Stats(100, 50, 60, 110), Option(Mago), Inventario()))
   )
   val tablon: List[Mision] = List(misionPeligrosa, misionParaLadronLider, misionLarga)
 

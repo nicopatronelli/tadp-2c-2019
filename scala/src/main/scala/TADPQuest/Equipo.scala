@@ -7,7 +7,8 @@ case class Equipo(nombre: String, integrantes: List[Heroe] = List(), pozoComun: 
   // Ante una lista vacia o un empate, retorna None
   def mejorHeroeSegun(criterio: Criterio): Option[Heroe] = Try(integrantes.maxBy(criterio)) match {
     case Success(heroe)
-      if esMaximoUnico(criterio(heroe), integrantes.map(criterio)) => Some(heroe)
+      // Marca error de tipo si pongo Some(heroe), pero corre
+      if esMaximoUnico(criterio(heroe), integrantes.map(criterio)) => Option(heroe)
     case _ => None
   }
 

@@ -2,7 +2,7 @@ package TADPQuest
 
 // Interfaz para modificador de stats
 trait Modifier {
-  def recalcularStats(stats: Stats): Stats // Modificador que retorna nuevos Stats
+  def recalcularStats(stats: Stats, heroe: Heroe): Stats // Modificador que retorna nuevos Stats
 }
 
 // Enum para para los stats

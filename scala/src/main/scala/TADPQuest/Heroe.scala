@@ -1,22 +1,31 @@
 package TADPQuest
 
-case class Heroe(baseStats: Stats, trabajo: Trabajo, inventario: Inventario = Inventario()) {
+import scala.Option // ??????????????????????????
+
+case class Heroe(baseStats: Stats, trabajo: Option[Trabajo], inventario: Inventario = Inventario()) {
 
   def stats: Stats = { // Modifica los stats base aplicando los modificadores con fold
-    val modificadores: List[Modifier] = List(trabajo, inventario)
-    modificadores.foldLeft(baseStats) { (accum, modificador) => modificador.recalcularStats(accum) }
+    val modificadores  = trabajo match {
+      case Some(trabajo) => List(trabajo, inventario) // todo: duda trabajo.get
+      case None => List(inventario)
+    }
+    modificadores.foldLeft(baseStats) { (accum, modificador) => modificador.recalcularStats(accum, this) }
   }
+
   // Getters directos para los stats reales (ya modificados)
   def hp: Int = stats.hp
   def fuerza: Int = stats.fuerza
   def velocidad: Int = stats.velocidad
   def inteligencia: Int = stats.inteligencia
 
-  def cambiarTrabajo(nuevoTrabajo: Trabajo): Heroe = copy(trabajo = nuevoTrabajo)
+  def cambiarTrabajo(nuevoTrabajo: Option[Trabajo]): Heroe = copy(trabajo = nuevoTrabajo)
 
-  def statPrincipal(): Stat = trabajo.statPrincipal()
+  def statPrincipal(): Option[Stat] = trabajo.map(_.statPrincipal())
 
-  def valorStatPrincipal(): Int = stats.valor(statPrincipal())
+  def valorStatPrincipal(): Int = statPrincipal() match {
+    case Some(stat) => stats.valor(stat)
+    case None => throw NoStatPrincipalException(s"El heroe $this no tiene trabajo, así que no tiene un stat principal")
+  }
 
   def agregarItem(item: Item): Heroe = {
     if ( item.cumpleRestriccion(this) ) copy(inventario = inventario.agregarItem(item))
