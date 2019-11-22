@@ -68,8 +68,16 @@ object CascoVikingo extends Casco {
 }
 
 object VinchaDelBufaloDeAgua extends Casco {
-  override def recalcularStats(stats: Stats, heroe: Heroe): Stats = ???
-  //override def cumpleRestriccion(heroe: Heroe): Boolean = heroe.trabajo
+  override def recalcularStats(stats: Stats, heroe: Heroe): Stats = {
+    if (heroe.stats.fuerza > heroe.stats.inteligencia)
+      stats.copy(inteligencia = stats.inteligencia + 30)
+    else stats.copy(
+      hp = stats.hp + 10,
+      fuerza = stats.hp + 10,
+      velocidad = stats.velocidad + 10
+    )
+  }
+  override def cumpleRestriccion(heroe: Heroe): Boolean = heroe.trabajo.isEmpty
 }
 
 // --- VESTIDOS/ARMADURAS ---
@@ -115,13 +123,21 @@ object PalitoMagico extends Arma {
 // --- TALISMANES ----
 
 object TalismanDeDedicacion extends Talisman {
-  override def recalcularStats(stats: Stats, heroe: Heroe): Stats = Stats()
+  override def recalcularStats(stats: Stats, heroe: Heroe): Stats = {
+    val incremento = (heroe.valorStatPrincipal() * 0.1).toInt
+    stats.copy(
+      hp = stats.hp + incremento ,
+      fuerza = stats.fuerza + incremento,
+      velocidad = stats.velocidad + incremento,
+      inteligencia = stats.inteligencia + incremento
+    )
+  }
 }
 
 object TalismanDelMinimalismo extends Talisman {
   override def recalcularStats(stats: Stats, heroe: Heroe): Stats = {
-    //val hpARestar = heroe.inventario.
-    stats.copy(hp = stats.hp + 50)
+    val hpARestar = (heroe.cantidadItemsEquipados - 1) * 10
+    stats.copy(hp = stats.hp + 50 - hpARestar)
   }
 }
 

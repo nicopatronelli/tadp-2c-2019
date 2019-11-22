@@ -32,6 +32,8 @@ case class Heroe(baseStats: Stats, trabajo: Option[Trabajo], inventario: Inventa
     else this // Si no cumple con la restriccion, retorno el heroe como estaba
   }
 
+  def cantidadItemsEquipados: Int = inventario.cantidadDeItems
+
   /*
     def diferenciaDeStats(otroHeroe: Heroe): Stats =
       Stats(
