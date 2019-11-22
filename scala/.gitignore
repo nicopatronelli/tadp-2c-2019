@@ -1,3 +1,5 @@
 target
 .idea
 project/target
+src/main/scala/Borrador.scala
+build.sbt
