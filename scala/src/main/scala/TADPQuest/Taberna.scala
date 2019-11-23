@@ -9,7 +9,7 @@ object Taberna {
     CofreDeOro(1000)
   )
   val misionFuerzaParaLosMagos = Mision(
-    List(ForzarPuerta),
+    List(ForzarPuerta, RescatarPrincesa),
     IncrementarFuerzaALosMagos(200)
   )
   val misionParaLadronLider = Mision(

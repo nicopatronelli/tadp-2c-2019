@@ -11,8 +11,8 @@ trait Tarea { // Interfaz Tarea
 
 case class PelearContraMonstruo(hpAReducir: Int) extends Tarea {
   override def facilidad(heroe: Heroe, equipo: Equipo): Int = {
-    heroe match {
-      case Heroe(_,Some(Guerrero),_) if equipo.lider().contains(heroe) => 20
+    heroe.trabajo match {
+      case Some(Guerrero) if equipo.lider().contains(heroe) => 20
       case _ => 10
     }
   }
@@ -60,8 +60,20 @@ case class RobarTalisman(talisman: Talisman) extends Tarea {
   }
 }
 
-/*7
- Los heroes podrían tener un atributo que sea listado de misiones realizadas
- con exito para tener "estado". A diferencia del inventario y el trabajo, las misiones
- realizadas por un héroe no se guardan en el mismo (son externas).
- */
+// Agrego una tarea nueva para probar la extensibilidad de la solución
+case object RescatarPrincesa extends Tarea {
+  override def facilidad(heroe: Heroe, equipo: Equipo): Int = {
+    heroe.trabajo match {
+      case Some(Guerrero) if heroe.fuerza > 100 => 50
+      case Some(Ladron) if heroe.velocidad > 70 => 30
+      case _ => equipo.lider().map(_.inteligencia).getOrElse(1) max 20
+    }
+  }
+
+  override def serRealizadaPor(heroe: Heroe): Heroe = {
+    val nuevosStats = heroe.baseStats.copy(
+      hp = heroe.baseStats.hp + 150,
+      inteligencia = heroe.baseStats.inteligencia * 2)
+    heroe.copy(baseStats = nuevosStats)
+  }
+}
