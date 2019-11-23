@@ -41,10 +41,12 @@ case class Equipo(nombre: String, integrantes: List[Heroe] = List(), pozoComun: 
   def vender(item: Item): Equipo = copy(pozoComun = pozoComun + item.valor())
 
   def integrantesQueTrabajanComo(trabajoBuscado: Trabajo): List[Heroe] =
-    integrantes.filter(_.trabajo.equals(trabajoBuscado))
+    integrantes.filter(_.trabajo.get.equals(trabajoBuscado))
 
   def integrantesQueNoTrabajenComo(trabajoBuscado: Trabajo): List[Heroe] =
-    integrantes.filterNot(_.trabajo.equals(trabajoBuscado))
+    integrantes.filterNot(_.trabajo.get.equals(trabajoBuscado))
+
+  def cantidadDeItemsTotales: Int = integrantes.map(_.cantidadItemsEquipados).sum
 
   private def esMaximoUnico(element: Int, list: List[Int]): Boolean =
     // Saca el entero de la lista y se fija si el maximo de la lista es menor al elemento extraido
@@ -65,7 +67,6 @@ case class Equipo(nombre: String, integrantes: List[Heroe] = List(), pozoComun: 
 
   def elegirHeroePara(tarea: Tarea): Try[Heroe] = {
     // debería reutilizar el metodo mejorHeroeSegun si es posible
-    // Retorna Success(heroeElegido) o Failure(ex)
     Try( this.integrantes.maxBy{ heroe => tarea.facilidad(heroe, this) } )
   }
 
@@ -83,13 +84,13 @@ case class Equipo(nombre: String, integrantes: List[Heroe] = List(), pozoComun: 
     // Los efectos de realizar una tarea deben efecutarse de inmediato (antes de pasar a la
     // siguiente tarea) en el heroe (por eso uso fold)
     val equipoInicial = this
-    val equipoPostMision = mision.tareas.foldLeft(Try(equipoInicial)) { (equipo, tarea) =>
+    val equipoPostMision: Try[Equipo] = mision.tareas.foldLeft(Try(equipoInicial)) { (equipo, tarea) =>
         equipo.flatMap(_.realizarTarea(tarea))
     }
-    equipoPostMision match {
-      case Success(equipo) => Try(Recompensa.cobrarRecompensa(equipo, mision.recompensa))
-      case Failure(ex) => Failure(ex)
+    def cobrarRecompensa: Try[Equipo] = {
+      equipoPostMision.map(e => Recompensa.cobrarRecompensa(e, mision.recompensa)): Try[Equipo]
     }
+    cobrarRecompensa
   }
 
   // Un equipo entiende el mensaje realizarTarea y luego éste delega en el integrante
@@ -104,17 +105,4 @@ case class Equipo(nombre: String, integrantes: List[Heroe] = List(), pozoComun: 
       case Failure(e) => Failure(e)
     }
   }
-
-//  def facilidad(heroe: Heroe, tarea: Tarea): Int = {
-//    tarea match {
-//      case PelearContraMonstruo(_) => this.lider() match {
-//        case Some(Guerrero) => 20
-//        case _ => 10
-//      }
-//      case RobarTalisman(talisman) => heroe.baseStats.velocidad
-//
-//    }
-//
-//  }
-
 }
