@@ -17,6 +17,12 @@ case class Heroe(baseStats: Stats, trabajo: Option[Trabajo], inventario: Inventa
   def velocidad: Int = stats.velocidad
   def inteligencia: Int = stats.inteligencia
 
+  // Getters directos para los stats base
+  def hpBase: Int = baseStats.hp
+  def fuerzaBase: Int = baseStats.fuerza
+  def velocidadBase: Int = baseStats.velocidad
+  def inteligenciaBase: Int = baseStats.inteligencia
+
   def cambiarTrabajo(nuevoTrabajo: Option[Trabajo]): Heroe = copy(trabajo = nuevoTrabajo)
 
   def statPrincipal(): Option[Stat] = trabajo.map(_.statPrincipal())
@@ -32,6 +38,9 @@ case class Heroe(baseStats: Stats, trabajo: Option[Trabajo], inventario: Inventa
   }
 
   def cantidadItemsEquipados: Int = inventario.cantidadDeItems
+
+  def incrementoDelStatPrincipalCon(item: Item): Int =
+    copy().agregarItem(item).valorStatPrincipal() - this.valorStatPrincipal()
 
   /*
     def diferenciaDeStats(otroHeroe: Heroe): Stats =

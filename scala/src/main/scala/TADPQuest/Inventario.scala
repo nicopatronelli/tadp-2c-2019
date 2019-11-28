@@ -1,7 +1,5 @@
 package TADPQuest
 
-import scala.util.Try
-
 trait Item extends Modifier {
   def cumpleRestriccion(heroe: Heroe): Boolean = true // Por defecto, todos los items se pueden equipar
   def valor(): Int = 1 // Por defecto los items valen 1
@@ -13,52 +11,59 @@ trait Arma extends Item {
   def requiereDosManos(): Boolean
 }
 trait Talisman extends Item
+// Null-Object Pattern
+object Vacio extends Casco with Armadura with Arma {
+  override def cumpleRestriccion(heroe: Heroe): Boolean = true
+  override def valor(): Int = 0
+  override def recalcularStats(stats: Stats, heroe: Heroe): Stats = stats
+  override def requiereDosManos(): Boolean = false
+}
 
 case class Inventario(
-                       cabeza: Casco = null,
-                       armadura: Armadura = null,
-                       manos: (Arma, Arma) = (null, null),
+                       cabeza: Casco = Vacio,
+                       armadura: Armadura = Vacio,
+                       manos: (Arma, Arma) = (Vacio, Vacio),
                        talismanes: List[Talisman] = List()
                      ) extends Modifier {
 
   def recalcularStats(stats: Stats, heroe: Heroe): Stats = {
-    // En caso de que sea un arma de dos manos, retorna una sola
-    // Si tengo dos armas de una mano del mismo tipo, en recalcularStats sólo se considera
-    // una sola para modificar los stats del héroe.
-    val armas = if (manos._1 == manos._2) (manos._1, null) else manos // todo
-
     // Modifica los stats base aplicando los modificadores de cada item con fold
-    // Si el item es null continua iterando con el acumulador
-    val items: List[Item] = List(cabeza, armadura, armas._1, armas._2) ++ talismanes
-    items.foldLeft(stats) { (accum, item) => Try(item.recalcularStats(accum, heroe)).getOrElse(accum) }
+    // Si el item es Vacio, las stats no sufren efecto y se continua iterando
+    val items: List[Item] = List(cabeza, armadura) ++ armasEquipadas() ++ talismanes
+    items.foldLeft(stats) { (accum, item) => item.recalcularStats(accum, heroe) }
   }
 
-  def agregarItem(item: Item): Inventario = {
+  def agregarItem(item: Item): Inventario = item match {
     // Asigna el item segun su tipo
-    item match {
-      case item: Casco => copy(cabeza = item)
-      case item: Armadura => copy(armadura = item)
-      case item: Arma if item.requiereDosManos() => copy(manos = (item, item))
-      case item: Arma => asignarArma(item)
-      case item: Talisman => copy(talismanes = item :: talismanes)
-      case _ => this
-    }
+    case item: Casco => copy(cabeza = item)
+    case item: Armadura => copy(armadura = item)
+    case item: Arma => asignarArma(item)
+    case item: Talisman => copy(talismanes = item :: talismanes)
+    case _ => this
   }
 
-  private def asignarArma(arma: Arma): Inventario = {
-    // Asigna el arma en la mano que este libre
-    manos match {
-      case (null, b) => copy(manos = (arma, b))
-      case (a, null) => copy(manos = (a, arma))
-      // Puede pasar que si tengo dos armas que ocupan una mano y me llega
-      // otra arma nueva, tiro las dos en vez de sola una.
-      case _ => copy(manos = (arma, null))
-    }
+  private def asignarArma(nuevaArma: Arma): Inventario = manos match {
+    // Si la nueva arma requiere las dos manos, asigno en las dos
+    case _ if nuevaArma.requiereDosManos() => copy(manos = (nuevaArma, nuevaArma))
+    // Si no hay armas, asigno en la izq
+    case (Vacio, Vacio) => copy(manos = (nuevaArma, Vacio))
+    // Si solo hay un arma en una mano, asigno en la que esta libre
+    case (Vacio, armaActual) => copy(manos = (nuevaArma, armaActual))
+    case (armaActual, Vacio) => copy(manos = (armaActual, nuevaArma))
+    // Si tengo un arma de dos manos, la tiro y asigno la nueva en la mano izq
+    case (armaActual, _) if armaActual.requiereDosManos() => copy(manos = (nuevaArma, Vacio))
+    // Si tengo dos armas que ocupan una mano, tiro el arma de la mano izq y asigno la nueva
+    case (_, armaActual) => copy(manos = (nuevaArma, armaActual))
+  }
+
+  def armasEquipadas(): List[Arma] = {
+    if (manos._1.requiereDosManos()) List(manos._1)
+    else List(manos._1, manos._2)
   }
 
   def cantidadDeItems: Int = {
     val items = List(cabeza, armadura, manos._1, manos._2) ++ talismanes
-    items.filterNot(_.equals(null)).size
+    items.filterNot(_.equals(Vacio)).size
   }
 }
 
