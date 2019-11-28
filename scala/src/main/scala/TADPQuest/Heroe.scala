@@ -1,7 +1,5 @@
 package TADPQuest
 
-import scala.Option // ??????????????????????????
-
 case class Heroe(baseStats: Stats, trabajo: Option[Trabajo], inventario: Inventario = Inventario()) {
 
   def stats: Stats = { // Modifica los stats base aplicando los modificadores con fold
