@@ -1,7 +1,7 @@
 package TADPQuest
 
-trait Tarea { // Interfaz Tarea
-  //def sePuedeRealizarPor(equipo: Equipo): Boolean = true // Por defecto, todas las tareas pueden realizarse
+//trait Tarea extends (Heroe => Heroe)  { // Interfaz Tarea
+trait Tarea   { // Interfaz Tarea
   def facilidad(heroe: Heroe, equipo: Equipo): Int
   // Me devuelve un nuevo heroe con los efectos producidos por realizar la tarea
   def serRealizadaPor(heroe: Heroe): Heroe

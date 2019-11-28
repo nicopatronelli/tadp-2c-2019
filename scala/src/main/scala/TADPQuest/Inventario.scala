@@ -14,7 +14,7 @@ trait Arma extends Item {
 }
 trait Talisman extends Item
 
-case class Inventario(  // todo REFACTOR: Deberían ser Option, no null
+case class Inventario(
                        cabeza: Casco = null,
                        armadura: Armadura = null,
                        manos: (Arma, Arma) = (null, null),
@@ -23,7 +23,9 @@ case class Inventario(  // todo REFACTOR: Deberían ser Option, no null
 
   def recalcularStats(stats: Stats, heroe: Heroe): Stats = {
     // En caso de que sea un arma de dos manos, retorna una sola
-    val armas = if (manos._1 == manos._2) (manos._1, null) else manos
+    // Si tengo dos armas de una mano del mismo tipo, en recalcularStats sólo se considera
+    // una sola para modificar los stats del héroe.
+    val armas = if (manos._1 == manos._2) (manos._1, null) else manos // todo
 
     // Modifica los stats base aplicando los modificadores de cada item con fold
     // Si el item es null continua iterando con el acumulador
@@ -48,6 +50,8 @@ case class Inventario(  // todo REFACTOR: Deberían ser Option, no null
     manos match {
       case (null, b) => copy(manos = (arma, b))
       case (a, null) => copy(manos = (a, arma))
+      // Puede pasar que si tengo dos armas que ocupan una mano y me llega
+      // otra arma nueva, tiro las dos en vez de sola una.
       case _ => copy(manos = (arma, null))
     }
   }

@@ -6,13 +6,14 @@ case class Heroe(baseStats: Stats, trabajo: Option[Trabajo], inventario: Inventa
 
   def stats: Stats = { // Modifica los stats base aplicando los modificadores con fold
     val modificadores  = trabajo match {
-      case Some(trabajo) => List(trabajo, inventario) // todo: duda trabajo.get
+      case Some(trabajo) => List(trabajo, inventario)
       case None => List(inventario)
     }
+    // val modificadores: List[Modifier] = inventario :: trabajo.toList // Si el trabajo es None, trabajo.toList retorna una lista vacía
     modificadores.foldLeft(baseStats) { (accum, modificador) => modificador.recalcularStats(accum, this) }
   }
 
-  // Getters directos para los stats reales (ya modificados)
+  // Getters directos para los stats finales (ya modificados)
   def hp: Int = stats.hp
   def fuerza: Int = stats.fuerza
   def velocidad: Int = stats.velocidad

@@ -22,7 +22,6 @@ object Recompensa {
         val noMagos = equipo.integrantesQueNoTrabajenComo(Mago)
         equipo.copy(integrantes = noMagos ++ magosMejorados)
       }
-      case _ => equipo
     }
   }
 }

@@ -95,14 +95,22 @@ case class Equipo(nombre: String, integrantes: List[Heroe] = List(), pozoComun: 
 
   // Un equipo entiende el mensaje realizarTarea y luego éste delega en el integrante
   // con mayor facilidad su realización (el equipo decide qué integrante realiza cada tarea)
+//  def realizarTarea(tarea: Tarea): Try[Equipo] = {
+//    val posibleHeroe = elegirHeroePara(tarea)
+//    posibleHeroe match {
+//      case Success(heroeElegido) => {
+//        val heroeDespuesDeTarea = tarea.serRealizadaPor(heroeElegido)
+//        Success(reemplazarMiembro(heroeElegido, heroeDespuesDeTarea))
+//      }
+//      case Failure(e) => Failure(e)
+//    }
+//  }
+
   def realizarTarea(tarea: Tarea): Try[Equipo] = {
-    val posibleHeroe = elegirHeroePara(tarea)
-    posibleHeroe match {
-      case Success(heroeElegido) => {
-        val heroeDespuesDeTarea = tarea.serRealizadaPor(heroeElegido)
-        Success(reemplazarMiembro(heroeElegido, heroeDespuesDeTarea))
-      }
-      case Failure(e) => Failure(e)
-    }
+    elegirHeroePara(tarea).map(heroeElegido => {
+      val heroeDespuesDeTarea = tarea.serRealizadaPor(heroeElegido)
+      reemplazarMiembro(heroeElegido, heroeDespuesDeTarea)
+    })
   }
+
 }
