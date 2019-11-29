@@ -97,7 +97,7 @@ case class Equipo(nombre: String, integrantes: List[Heroe] = List(), pozoComun: 
     }
   }
 
-  def entrenar(criterio: Criterio, tablon: List[Mision]): Try[Equipo] = {
+  def entrenar(criterio: CriterioMision, tablon: List[Mision]): Try[Equipo] = {
     val proximaMision = elegirMision(criterio, tablon)
     //println(s"Se eligió la misión: $proximaMision")
     var equipoPostMision: Try[Equipo] = realizarMision(proximaMision)

@@ -3,7 +3,6 @@ package TADPQuest
 import scala.util.{Failure, Success, Try}
 
 object Taberna {
-  type Criterio = (Equipo, Equipo) => Boolean
   val misionPeligrosa = Mision(
     List(PelearContraMonstruo(20), PelearContraMonstruo(30)),
     CofreDeOro(1000)

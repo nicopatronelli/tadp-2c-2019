@@ -2,16 +2,7 @@ package TADPQuest
 
 import scala.util.Try
 
-case class Mision(tareas: List[Tarea], recompensa: Recompensa) {
-  def serRealizadaPor(equipo: Equipo): Try[Equipo] = {
-    val equipoInicial = equipo
-    val equipoPostMision = tareas.foldLeft(Try(equipoInicial)) { (equipo, tarea) =>
-      equipo.flatMap(_.realizarTarea(tarea))
-    }
-    val equipoRecompensado = equipoPostMision.map(_.cobrarRecompensa(this))
-    equipoRecompensado
-  }
-}
+case class Mision(tareas: List[Tarea], recompensa: Recompensa)
 
 trait Recompensa
 case class CofreDeOro(cantidadDeOro: Int) extends Recompensa
@@ -61,4 +52,4 @@ object Recompensa {
 //    equipo.copy(integrantes = noMagos ++ magosMejorados)
 //  }
 //}
-
+//
