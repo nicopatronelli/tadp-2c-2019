@@ -73,4 +73,33 @@ case class Equipo(nombre: String, integrantes: List[Heroe] = List(), pozoComun: 
     equipoRecompensado
   }
 
+
+
+
+  /*****  Entrenar V.2  ******/
+
+  type CriterioMision = (Equipo, Equipo) => Boolean
+
+  def elegirMision(tablon: List[Mision], criterio: CriterioMision): Mision = {
+    tablon.reduceLeft { (m1, m2) =>
+      val e1 = realizarMision(m1).get // todo: REFACTOR -> Try(Mision)
+      val e2 = realizarMision(m2).get
+      if (criterio(e1, e2)) m1 else m2
+    }
+  }
+
+  def entrenar(tablon: List[Mision], criterio: CriterioMision): Try[Equipo] = {
+    // Ordeno las misiones segun el criterio
+    val misionesElegidas: List[Mision] = List()
+    val misionesSegunCriterio = tablon.foldLeft(misionesElegidas) {
+      (misionesElegidasAccum, _) => elegirMision(tablon.diff(misionesElegidasAccum), criterio) :: misionesElegidasAccum
+    }.reverse
+
+    // Realizo las misiones segun el orden de la lista
+    misionesSegunCriterio.foldLeft(Try(this)) {
+      (equipoEntrenado, siguienteMision) =>
+        equipoEntrenado.flatMap(_.realizarMision(siguienteMision)) //.getOrElse(equipoEntrenado)
+    }
+  }
+
 }

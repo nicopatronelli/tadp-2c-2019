@@ -24,6 +24,7 @@ object Taberna {
     misionPeligrosa, misionFuerzaParaLosMagos, misionParaLadronLider, misionLarga
   )
 
+  /*
   def elegirMision(equipo: Equipo, criterio: Criterio): Mision = {
     tablon.reduceLeft{ (m1, m2) =>
       val e1 = equipo.realizarMision(m1).get // todo: REFACTOR -> Try(Mision)
@@ -31,8 +32,10 @@ object Taberna {
       if (criterio(e1, e2)) m1 else m2
     }
   }
+*/
 
-//  def elegirMision(equipo: Equipo, criterio: Criterio): Try[Mision] = {
+
+    //  def elegirMision(equipo: Equipo, criterio: Criterio): Try[Mision] = {
 //    for {
 //      m1 <- tablon
 //      m2 <- tablon
@@ -50,10 +53,13 @@ object Taberna {
 //    }
 //  }
 
+  /*
   def entrenar(equipo: Equipo): Try[Equipo] = {
     val equipoInicial = equipo
     tablon.foldLeft(Try(equipoInicial)){
       (eq,mision) => eq.flatMap(_.realizarMision(mision))
     }: Try[Equipo]
   }
+*/
+
 }

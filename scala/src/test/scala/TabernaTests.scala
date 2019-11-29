@@ -11,6 +11,8 @@ class TabernaTests extends FlatSpec {
     val equipo: Equipo = Equipo("MagoYGuerreroYLadron", List(mago, guerrero, ladron))
   }
 
+  /*
+
   "Cuando el criterio es el de mayor pozo comun se" should "elegir la misionPeligrosa ya" +
     "que tiene recompensa de 1000 de oro" in {
     val misionElegida: Mision = elegirMision(fixture.equipo, (e1, e2) => e1.pozoComun > e2.pozoComun)
@@ -30,8 +32,35 @@ class TabernaTests extends FlatSpec {
   "Entrenar a un equipo con una mision que no puede realizar" should "fallar" in {
     val guerreroLider = Heroe(Stats(100, 250, 50, 60), Option(Guerrero), Inventario())
     val equipoConGuerreroLider = fixture.equipo.obtenerMiembro(guerreroLider)
-    assert(entrenar(equipoConGuerreroLider).equals(
+    assert(Taberna.entrenar(equipoConGuerreroLider, (e1, e2) => e1.pozoComun > e2.pozoComun).equals(
       Failure(NoSePuedeRealizarTareaException(RobarTalisman(TalismanMaldito))))
     )
   }
+
+   */
+
+  "Cuando el criterio es el de mayor pozo comun se" should "elegir la misionPeligrosa ya" +
+    "que tiene recompensa de 1000 de oro" in {
+    val misionElegida: Mision = fixture.equipo.elegirMision(tablon, (e1, e2) => e1.pozoComun > e2.pozoComun)
+    assert(misionElegida.equals(misionPeligrosa))
+  }
+
+  "Cuando el criterio es el de la misión que mayor fuerza agrega a los magos se" should "elegir" +
+    "la misionFuerzaParaLosMagos" in {
+    val misionElegida: Mision = fixture.equipo.elegirMision(
+      tablon,
+      (e1, e2) =>
+        e1.integrantesQueTrabajanComo(Mago)(0).fuerza > e2.integrantesQueTrabajanComo(Mago)(0).fuerza
+    )
+    assert(misionElegida.equals(misionFuerzaParaLosMagos))
+  }
+
+  "Entrenar a un equipo con una mision que no puede realizar" should "fallar" in {
+    val guerreroLider = Heroe(Stats(100, 250, 50, 60), Option(Guerrero), Inventario())
+    val equipoConGuerreroLider = fixture.equipo.obtenerMiembro(guerreroLider)
+    assert(equipoConGuerreroLider.entrenar(tablon, (e1, e2) => e1.pozoComun > e2.pozoComun).equals(
+      Failure(NoSePuedeRealizarTareaException(RobarTalisman(TalismanMaldito))))
+    )
+  }
+
 }
