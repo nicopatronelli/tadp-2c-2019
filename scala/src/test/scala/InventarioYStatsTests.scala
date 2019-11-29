@@ -51,14 +51,24 @@ class InventarioYStatsTests extends FlatSpec {
     assert( guerreroConUnArmaDeDosManos.inventario.manos.equals( (ArcoViejo, ArcoViejo) ) )
 
     val guerreroConUnArma = guerreroConUnArmaDeDosManos.agregarItem(EspadaDeLaVida)
-    assert( guerreroConUnArma.inventario.manos.equals( (EspadaDeLaVida, null) ) )
+    assert( guerreroConUnArma.inventario.manos.equals( (EspadaDeLaVida, Vacio) ) )
+  }
+
+  "Si tengo dos armas que ocupan una mano y me llega otra arma nueva de una mano" should "tirar solo un arma" in {
+    val guerreroConDosArmas = fixture.guerreroSimple
+      .agregarItem(EspadaDeLaVida)
+      .agregarItem(EscudoAntiRobo)
+    assert( guerreroConDosArmas.inventario.manos.equals( (EspadaDeLaVida, EscudoAntiRobo) ) )
+
+    val guerreroConDosEscudos = guerreroConDosArmas.agregarItem(EscudoAntiRobo)
+    assert( guerreroConDosEscudos.inventario.manos.equals( (EscudoAntiRobo, EscudoAntiRobo) ) )
   }
 
   "Un item que no cumple las restricciones" should "no ser agregado al inventario del heroe" in {
     val guerreroSinArmas = fixture.guerreroSimple
       .agregarItem(PalitoMagico)
       .agregarItem(EspadaDeLaVida)
-    assert( guerreroSinArmas.inventario.manos.equals( (EspadaDeLaVida, null) ) )
+    assert( guerreroSinArmas.inventario.manos.equals( (EspadaDeLaVida, Vacio) ) )
   }
 
   "El criterio de mas veloz" should "devolver el heroe con mayor velocidad del equipo" in {

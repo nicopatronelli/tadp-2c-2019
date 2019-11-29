@@ -4,38 +4,38 @@ import scala.util.{Success, Failure, Try}
 case class Equipo(nombre: String, integrantes: List[Heroe] = List(), pozoComun: Int = 0) {
   type Criterio = Heroe => Int
 
-  // Ante una lista vacia o un empate, retorna None
-  def mejorHeroeSegun(criterio: Criterio): Option[Heroe] = Try(integrantes.maxBy(criterio)) match {
-    case Success(heroe)
-      // Marca error de tipo si pongo Some(heroe), pero corre
-      if esMaximoUnico(criterio(heroe), integrantes.map(criterio)) => Option(heroe)
-    case _ => None
-  }
+  def mejorHeroeSegun(criterio: Criterio): Option[Heroe] = Try(integrantes.maxBy(criterio)).toOption
 
   def obtenerItem(nuevoItem: Item): Equipo = {
-    // Pongo cada heroe en una tupla (HeroeSinItem, IncrementoStatPrincipal)
-    val heroesConIncremento: List[(Heroe, Int)] = heroesConIncrementoDeStatPrincipal(nuevoItem)
-    if ( algunoTieneIncrementoPositivo(heroesConIncremento) ) {
-      // Me quedo con el heroe de mayor incremento
-      val heroeConMaximoIncremento = heroesConIncremento.maxBy( heroeConIncremento => heroeConIncremento._2 )._1
-      // Reemplazo el heroe por el mismo heroe con el item equipado
-      reemplazarMiembro(heroeConMaximoIncremento, heroeConMaximoIncremento.agregarItem(nuevoItem))
-    } else {
+    val incrementos: List[Int] = integrantes.map( _.incrementoDelStatPrincipalCon(nuevoItem) )
+    if ( incrementos.forall( _ <= 0 ) ) {
       vender(nuevoItem)
+    } else {
+      val heroeConMayorIncremento: Heroe = integrantes.maxBy( _.incrementoDelStatPrincipalCon(nuevoItem) )
+      reemplazarMiembro(heroeConMayorIncremento, heroeConMayorIncremento.agregarItem(nuevoItem))
     }
   }
 
   def obtenerMiembro(nuevoIntegrante: Heroe): Equipo = copy(integrantes = nuevoIntegrante :: integrantes)
 
   def reemplazarMiembro(integranteReemplazado: Heroe, nuevoIntegrante: Heroe): Equipo =
-    Try(copy(integrantes = integrantes.map {
+    copy(integrantes = integrantes.map {
       case integrante if integrante.equals(integranteReemplazado) => nuevoIntegrante
       case integrante => integrante
-    })).getOrElse(this)
+    })
 
   def lider(): Option[Heroe] = {
     val criterioStatPrincipal: Criterio = _.valorStatPrincipal()
-    mejorHeroeSegun(criterioStatPrincipal)
+    mejorHeroeSegun(criterioStatPrincipal) match {
+      // Si hay un empate en el valor del Stat Principal, no hay un lider definido
+      case Some(heroe)
+        if cantidadDeIntegrantesConStatPrincipalIgualA(heroe.valorStatPrincipal()) == 1 => Some(heroe)
+      case _ => None
+    }
+  }
+
+  private def cantidadDeIntegrantesConStatPrincipalIgualA(valorStat: Int): Int = {
+    integrantes.map(_.valorStatPrincipal()).count(_ == valorStat)
   }
 
   def vender(item: Item): Equipo = copy(pozoComun = pozoComun + item.valor())
@@ -48,24 +48,7 @@ case class Equipo(nombre: String, integrantes: List[Heroe] = List(), pozoComun: 
 
   def cantidadDeItemsTotales: Int = integrantes.map(_.cantidadItemsEquipados).sum
 
-  private def esMaximoUnico(element: Int, list: List[Int]): Boolean =
-    // Saca el entero de la lista y se fija si el maximo de la lista es menor al elemento extraido
-    list.diff(List(element)).max < element
-
-  private def algunoTieneIncrementoPositivo(heroesConIncremento: List[(Heroe, Int)]): Boolean =
-    heroesConIncremento.exists( incremento => incremento._2 > 0)
-
-  private def heroesConIncrementoDeStatPrincipal(nuevoItem: Item): List[(Heroe, Int)] = {
-    // Pongo cada heroe en una tupla (HeroeSinItem, HeroeConItem)
-    val integrantesConNuevoItem: List[(Heroe, Heroe)] =
-      integrantes.map( integrante => (integrante, integrante.agregarItem(nuevoItem)) )
-
-    // Pongo cada heroe en una tupla (HeroeSinItem, IncrementoStatPrincipal)
-    integrantesConNuevoItem.map( integrante =>
-      (integrante._1, integrante._2.valorStatPrincipal() - integrante._1.valorStatPrincipal()) )
-  }
-
-  def elegirHeroePara(tarea: Tarea): Try[Heroe] = { // OK
+  def elegirHeroePara(tarea: Tarea): Try[Heroe] = {
     // debería reutilizar el metodo mejorHeroeSegun si es posible
     Try( integrantes.maxBy{ heroe => tarea.facilidad(heroe, this) } )
   }
@@ -89,4 +72,5 @@ case class Equipo(nombre: String, integrantes: List[Heroe] = List(), pozoComun: 
     val equipoRecompensado = equipoPostMision.map(_.cobrarRecompensa(mision))
     equipoRecompensado
   }
+
 }
