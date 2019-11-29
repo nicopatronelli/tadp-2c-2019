@@ -6,7 +6,6 @@ class InventarioYStatsTests extends FlatSpec {
 
   def fixture = new {
     val baseStats: Stats = Stats(100,100,100,100)
-    // todo: Pregunta: si pongo Some(Guerrero) me marca error de tipos
     val guerreroSimple: Heroe = Heroe(baseStats, Option(Guerrero), Inventario())
     val guerreroConCascoYArmadura: Heroe = Heroe(baseStats, Option(Guerrero),
       Inventario(cabeza = CascoVikingo, armadura = ArmaduraEleganteSport))

@@ -17,16 +17,17 @@ class CalculoDeFacilidadTests extends FlatSpec {
 
     "La facilidad para forzar una puerta " should "igual a la inteligencia del héroe más 10 por " +
       "cada ladrón en el equipo" in {
-      val facilidadParaForzarPuerta = ForzarPuerta.facilidad(fixture.equipo.integrantes(0), fixture.equipo)
-      // Inteligencia del guerrero + 10 por cada ladron en el equipo
+      val facilidadParaForzarPuerta = ForzarPuerta.facilidad(fixture.guerrero, fixture.equipo)
+      // Inteligencia del heroe + 10 por cada ladron en el equipo
       //  - El guerrero tiene 50 de inteligencia inicial pero por tener como trabajo Guerrero se reduce a 40
       //  - Como hay dos ladrones en el equipo, entonces: 40 + 10 * 2 = 60
       assert(facilidadParaForzarPuerta.equals(60))
     }
 
-    "La facilidad para robar un talisman" should "igual a la velocidad del heroe" in {
+    "La facilidad para robar un talisman" should "ser igual a la velocidad del heroe" in {
       val soloLadrones = Equipo("Ladrones", List(fixture.ladron, fixture.otroLadron))
-      val facilidadParaRobarUnTalisman = RobarTalisman(TalismanMaldito).facilidad(soloLadrones.lider().get, soloLadrones)
-      assert(facilidadParaRobarUnTalisman.equals(soloLadrones.lider().get.velocidad))
+      val liderLadron = soloLadrones.lider().get
+      val facilidadParaRobarUnTalisman = RobarTalisman(TalismanMaldito).facilidad(liderLadron, soloLadrones)
+      assert(facilidadParaRobarUnTalisman.equals(liderLadron.velocidad))
     }
 }

@@ -21,7 +21,7 @@ class MisionesTests extends FlatSpec {
     //  - ForzarPuerta no tiene efecto contra los magos
     val equipoDespuesDeMision = fixture.equipo.realizarMision(fixture.mision)
     val hpMagoAntesDeMision = fixture.mago.stats.hp
-    val hpMagoDespuesDeMision = equipoDespuesDeMision.get.integrantes(0).stats.hp
+    val hpMagoDespuesDeMision = equipoDespuesDeMision.get.integrantes(0).hp
     assert(hpMagoAntesDeMision.equals(hpMagoDespuesDeMision + 50))
   }
 
@@ -33,9 +33,10 @@ class MisionesTests extends FlatSpec {
 
   "Si un equipo no puede realizar una tarea de la misión, la misión entera" should "fallar" in {
     // No se puede realizar la misión porque se necesita que el líder del equipo sea un ladrón para
-    // robar un talismán
+    // robar un talismán (y el líder es un mago)
     val misionImposible = fixture.mision.copy(tareas = RobarTalisman(TalismanMaldito) :: fixture.mision.tareas)
-    assert(fixture.equipo.realizarMision(misionImposible).equals(Failure(NoSePuedeRealizarTareaException(RobarTalisman(TalismanMaldito)))))
+    //assert(fixture.equipo.realizarMision(misionImposible).equals(Failure(NoSePuedeRealizarTareaException(RobarTalisman(TalismanMaldito)))))
+    assert(fixture.equipo.realizarMision(misionImposible).isFailure)
   }
 
   "Al robar un talisman" should "agregar el talisman robado a un integrante del equipo"

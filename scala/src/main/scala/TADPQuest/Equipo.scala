@@ -65,52 +65,28 @@ case class Equipo(nombre: String, integrantes: List[Heroe] = List(), pozoComun: 
       (integrante._1, integrante._2.valorStatPrincipal() - integrante._1.valorStatPrincipal()) )
   }
 
-  def elegirHeroePara(tarea: Tarea): Try[Heroe] = {
+  def elegirHeroePara(tarea: Tarea): Try[Heroe] = { // OK
     // debería reutilizar el metodo mejorHeroeSegun si es posible
-    Try( this.integrantes.maxBy{ heroe => tarea.facilidad(heroe, this) } )
+    Try( integrantes.maxBy{ heroe => tarea.facilidad(heroe, this) } )
   }
 
-//  def realizarMision2(mision: Mision, equipo: Equipo): Try[Equipo] = {
-//    for {
-//      tarea <- mision.tareas
-//      heroeElegido <- elegirHeroePara(tarea)
-//      heroeDespuesDeTarea <- Try(tarea.serRealizadaPor(heroeElegido))
-//      nuevoEquipo <- Try(equipo.reemplazarMiembro(heroeElegido, heroeDespuesDeTarea))
-//      equipoRecompensado <- Try(Recompensa.cobrarRecompensa(nuevoEquipo, mision.recompensa))
-//    } yield equipoRecompensado
-//  }
-
-  def realizarMision(mision: Mision): Try[Equipo] = {
-    // Los efectos de realizar una tarea deben efecutarse de inmediato (antes de pasar a la
-    // siguiente tarea) en el heroe (por eso uso fold)
-    val equipoInicial = this
-    val equipoPostMision: Try[Equipo] = mision.tareas.foldLeft(Try(equipoInicial)) { (equipo, tarea) =>
-        equipo.flatMap(_.realizarTarea(tarea))
-    }
-    def cobrarRecompensa: Try[Equipo] = {
-      equipoPostMision.map(e => Recompensa.cobrarRecompensa(e, mision.recompensa)): Try[Equipo]
-    }
-    cobrarRecompensa
-  }
-
-  // Un equipo entiende el mensaje realizarTarea y luego éste delega en el integrante
-  // con mayor facilidad su realización (el equipo decide qué integrante realiza cada tarea)
-//  def realizarTarea(tarea: Tarea): Try[Equipo] = {
-//    val posibleHeroe = elegirHeroePara(tarea)
-//    posibleHeroe match {
-//      case Success(heroeElegido) => {
-//        val heroeDespuesDeTarea = tarea.serRealizadaPor(heroeElegido)
-//        Success(reemplazarMiembro(heroeElegido, heroeDespuesDeTarea))
-//      }
-//      case Failure(e) => Failure(e)
-//    }
-//  }
-
-  def realizarTarea(tarea: Tarea): Try[Equipo] = {
+  def realizarTarea(tarea: Tarea): Try[Equipo] = { // OK
     elegirHeroePara(tarea).map(heroeElegido => {
       val heroeDespuesDeTarea = tarea.serRealizadaPor(heroeElegido)
       reemplazarMiembro(heroeElegido, heroeDespuesDeTarea)
     })
   }
 
+  private def cobrarRecompensa(mision: Mision): Equipo = {
+    Recompensa.cobrarRecompensa(this, mision.recompensa)
+  }
+
+  def realizarMision(mision: Mision): Try[Equipo] = { // OK
+    val equipoInicial = this
+    val equipoPostMision = mision.tareas.foldLeft(Try(equipoInicial)) { (equipo, tarea) =>
+        equipo.flatMap(_.realizarTarea(tarea))
+    }
+    val equipoRecompensado = equipoPostMision.map(_.cobrarRecompensa(mision))
+    equipoRecompensado
+  }
 }
