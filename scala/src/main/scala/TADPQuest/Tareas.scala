@@ -18,7 +18,6 @@ case class PelearContraMonstruo(hpAReducir: Int) extends Tarea {
   }
 
   override def serRealizadaPor(heroe: Heroe): Heroe = {
-    println(s"La tarea RescatarPrincesa fue realizada por $heroe")
     heroe.stats.fuerza match {
       case valorDeFuerza if valorDeFuerza < 20 =>
         val nuevosStats = heroe.baseStats.copy(hp = heroe.baseStats.hp - hpAReducir)
@@ -72,7 +71,6 @@ case object RescatarPrincesa extends Tarea {
   }
 
   override def serRealizadaPor(heroe: Heroe): Heroe = {
-    println(s"La tarea RescatarPrincesa fue realizada por $heroe")
     val nuevosStats = heroe.baseStats.copy(
       hp = heroe.baseStats.hp + 150,
       inteligencia = heroe.baseStats.inteligencia * 2)

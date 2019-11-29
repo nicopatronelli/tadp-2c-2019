@@ -119,7 +119,7 @@ object EscudoAntiRobo extends Arma {
 }
 
 object PalitoMagico extends Arma {
-  override def recalcularStats(stats: Stats, heroe: Heroe): Stats = stats.copy(fuerza = stats.fuerza + 2)
+  override def recalcularStats(stats: Stats, heroe: Heroe): Stats = stats.copy(inteligencia = stats.inteligencia + 20)
   override def cumpleRestriccion(heroe: Heroe): Boolean =
     heroe.trabajo match {
       case Some(Mago) => true
