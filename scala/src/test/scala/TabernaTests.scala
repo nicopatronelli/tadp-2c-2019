@@ -14,17 +14,16 @@ class TabernaTests extends FlatSpec {
 
   "Cuando el criterio es el de mayor pozo comun se" should "elegir la misionPeligrosa ya" +
     "que tiene recompensa de 1000 de oro (es la que mas oro da del tablon)" in {
-    val misionElegida: Mision = fixture.equipo.elegirMision((e1, e2) => e1.pozoComun > e2.pozoComun, tablon)
+    val misionElegida: Mision = fixture.equipo.elegirMision((e1, e2) => e1.pozoComun > e2.pozoComun, tablon).get
     assert(misionElegida.equals(misionPeligrosa))
   }
 
   "Cuando el criterio es el de la misión que mayor fuerza agrega a los magos se" should "elegir" +
     "la misionFuerzaParaLosMagos" in {
     val misionElegida: Mision = fixture.equipo.elegirMision(
-      (e1, e2) =>
-        e1.integrantesQueTrabajanComo(Mago)(0).fuerza > e2.integrantesQueTrabajanComo(Mago)(0).fuerza,
+      (e1, e2) => e1.integrantesQueTrabajanComo(Mago)(0).fuerza > e2.integrantesQueTrabajanComo(Mago)(0).fuerza,
       tablon
-    )
+    ).get
     assert(misionElegida.equals(misionFuerzaParaLosMagos))
   }
 
@@ -33,8 +32,8 @@ class TabernaTests extends FlatSpec {
     val equipoConGuerreroLider = fixture.equipo.obtenerMiembro(guerreroLider)
     val equipoEntrenado = equipoConGuerreroLider.entrenar(
       (e1, e2) => e1.pozoComun > e2.pozoComun,
-      List(misionPeligrosa, misionLarga, misionMasPeligrosa))
-    //println(s"El equipo entrenado es $equipoEntrenado")
+      List(misionPeligrosa, misionLarga, misionMasPeligrosa)
+    )
     // misionPeligrosa da 1000 de oro y misionMasPeligrosa da 2000 de oro
     // misionLarga agrega un nuevo miembro, no da oro => 3000 de oro después de entrenar
     assert(equipoEntrenado.get.pozoComun.equals(3000))
@@ -43,14 +42,11 @@ class TabernaTests extends FlatSpec {
   "Si el entrenamiento incluye una mision que el equipo no puede realizar, el entrenamiento" should "fallar" in {
     val guerreroLider = Heroe(Stats(1000, 250, 50, 60), Option(Guerrero), Inventario())
     val equipoConGuerreroLider = fixture.equipo.obtenerMiembro(guerreroLider)
-    val equipoEntrenado = equipoConGuerreroLider.entrenar(
-      (e1, e2) => e1.pozoComun > e2.pozoComun,
-      tablon)
-    assert(equipoEntrenado.equals(
-        Failure(
-          NoSePuedeRealizarTareaException(RobarTalisman(TalismanMaldito)))
-      )
-    )
+    val equipoEntrenado = equipoConGuerreroLider.entrenar( (e1, e2) => e1.pozoComun > e2.pozoComun, tablon )
+    // Como el equipo no puede realizar la tarea "RobarTalisman" de la mision "misionParaLadronLider"
+    // no se elige esa mision y retorna Failture
+    assert( equipoEntrenado.equals( Failure(NoSeEligioMisionException()) ) )
+    //assert( equipoEntrenado.equals( Failure(NoSePuedeRealizarTareaException(RobarTalisman(TalismanMaldito))) ) )
   }
 
 }

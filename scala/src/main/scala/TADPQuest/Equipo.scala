@@ -1,9 +1,10 @@
 package TADPQuest
-import TADPQuest.Taberna._
 import scala.util.{Failure, Success, Try}
 
 case class Equipo(nombre: String, integrantes: List[Heroe] = List(), pozoComun: Int = 0) {
   type CriterioHeroe = Heroe => Int
+  // Debe retornar true si el resultado del 1er equipo es mejor que el 2do
+  type CriterioMision = (Equipo, Equipo) => Boolean
 
   def mejorHeroeSegun(criterio: CriterioHeroe): Option[Heroe] = Try(integrantes.maxBy(criterio)).toOption
 
@@ -27,17 +28,16 @@ case class Equipo(nombre: String, integrantes: List[Heroe] = List(), pozoComun: 
 
   def lider(): Option[Heroe] = {
     val criterioStatPrincipal: CriterioHeroe = _.valorStatPrincipal()
+    // Si hay un empate en el valor del Stat Principal, no hay un lider definido
     mejorHeroeSegun(criterioStatPrincipal) match {
-      // Si hay un empate en el valor del Stat Principal, no hay un lider definido
       case Some(heroe)
         if cantidadDeIntegrantesConStatPrincipalIgualA(heroe.valorStatPrincipal()) == 1 => Some(heroe)
       case _ => None
     }
   }
 
-  private def cantidadDeIntegrantesConStatPrincipalIgualA(valorStat: Int): Int = {
+  private def cantidadDeIntegrantesConStatPrincipalIgualA(valorStat: Int): Int =
     integrantes.map(_.valorStatPrincipal()).count(_ == valorStat)
-  }
 
   def vender(item: Item): Equipo = copy(pozoComun = pozoComun + item.valor())
 
@@ -49,62 +49,57 @@ case class Equipo(nombre: String, integrantes: List[Heroe] = List(), pozoComun: 
 
   def cantidadDeItemsTotales: Int = integrantes.map(_.cantidadItemsEquipados).sum
 
-  def elegirHeroePara(tarea: Tarea): Try[Heroe] = {
-    // debería reutilizar el metodo mejorHeroeSegun si es posible
+  def elegirHeroePara(tarea: Tarea): Try[Heroe] =
     Try( integrantes.maxBy{ heroe => tarea.facilidad(heroe, this) } )
-  }
 
-  def realizarTarea(tarea: Tarea): Try[Equipo] = { // OK
-    elegirHeroePara(tarea).map(heroeElegido => {
+  def realizarTarea(tarea: Tarea): Try[Equipo] = {
+    elegirHeroePara(tarea).map( heroeElegido => {
       val heroeDespuesDeTarea = tarea.serRealizadaPor(heroeElegido)
       reemplazarMiembro(heroeElegido, heroeDespuesDeTarea)
     })
   }
 
-  def cobrarRecompensa(mision: Mision): Equipo = {
-    Recompensa.cobrarRecompensa(this, mision.recompensa)
+  def cobrarRecompensa(mision: Mision): Equipo = { // Retorna un "equipo recompensado"
+    mision.recompensa match {
+      case CofreDeOro(cantidadDeOro) => copy(pozoComun = pozoComun + cantidadDeOro)
+      case NuevoItem(item)   => obtenerItem(item)
+      case NuevoHeroe(heroe) => obtenerMiembro(heroe)
+      case IncrementarFuerzaALosMagos(incremento) =>
+        val magos = integrantesQueTrabajanComo(Mago)
+        val magosMejorados = magos.map(m => m.copy(baseStats = m.baseStats.copy(fuerza = m.baseStats.fuerza + incremento)))
+        val noMagos = integrantesQueNoTrabajenComo(Mago)
+        copy(integrantes = noMagos ++ magosMejorados)
+    }
   }
 
-  def realizarMision(mision: Mision): Try[Equipo] = { // OK
-    val equipoInicial = this
-    val equipoPostMision = mision.tareas.foldLeft(Try(equipoInicial)) { (equipo, tarea) =>
+  def realizarMision(mision: Mision): Try[Equipo] = {
+    val equipoInicial = Try(this)
+    val equipoPostMision = mision.tareas.foldLeft(equipoInicial) { (equipo, tarea) =>
         equipo.flatMap(_.realizarTarea(tarea))
     }
-    val equipoRecompensado = equipoPostMision.map(_.cobrarRecompensa(mision))
-    equipoRecompensado
+    equipoPostMision.map(_.cobrarRecompensa(mision))
   }
 
-  type CriterioMision = (Equipo, Equipo) => Boolean
-  def elegirMisionDeprecada(criterio: CriterioMision, tablon: List[Mision]): Mision = { // OK
-    tablon.reduceLeft{ (m1, m2) =>
-      val e1 = this.realizarMision(m1).get // todo: REFACTOR -> Try(Mision)
-      val e2 = this.realizarMision(m2).get
-      if (criterio(e1, e2)) m1 else m2
-    }
-  }
-
-  def elegirMision(criterio: CriterioMision, tablon: List[Mision]): Mision = { // OK
-    tablon.reduceLeft{ (m1, m2) =>
-      val resultadoEquipo1 = this.realizarMision(m1)
-      val resultadoEquipo2 = this.realizarMision(m2)
-      (resultadoEquipo1, resultadoEquipo2) match { // es una dupla de la forma (Try[Equipo], Try[Equipo])
-        case (Success(e1), Success(e2)) =>
-          if (criterio(e1, e2)) m1 else m2
-        case (Success(_), Failure(_)) => m1
-        case (Failure(_), Success(_)) => m2
-        ///case (Failure(_), Failure(_)) => ???
+  def elegirMision(criterio: CriterioMision, tablon: List[Mision]): Try[Mision] = {
+    // (MisionRealizada, EquipoResultante)
+    val resultadoEquipo: (Try[Mision], Equipo) = (Failure(NoSeEligioMisionException()), this)
+    tablon.foldLeft(resultadoEquipo) { (mejorResultadoDeEquipo, siguienteMision) =>
+      realizarMision(siguienteMision) match {
+        case Success(equipo) if mejorResultadoDeEquipo._1.isFailure | criterio(equipo, mejorResultadoDeEquipo._2) =>
+          (Success(siguienteMision), equipo)
+        case _ => mejorResultadoDeEquipo
       }
-    }
+    }._1
   }
 
   def entrenar(criterio: CriterioMision, tablon: List[Mision]): Try[Equipo] = {
-    val proximaMision = elegirMision(criterio, tablon)
-    //println(s"Se eligió la misión: $proximaMision")
-    var equipoPostMision: Try[Equipo] = realizarMision(proximaMision)
-    val misionesRestantes = tablon.filterNot(m => m == proximaMision) // descarto la misión que acabo de hacer
-    if (misionesRestantes.nonEmpty) // Si quedan misiones por hacer sigo entrenando
-      equipoPostMision = equipoPostMision.flatMap(_.entrenar(criterio, misionesRestantes))
-    equipoPostMision
+    elegirMision(criterio, tablon).flatMap { mision =>
+      val equipoPostMision = realizarMision(mision)
+      val misionesRestantes = tablon.diff(List(mision)) // Descarto la misión que acabo de hacer
+      if (misionesRestantes.nonEmpty) // Si quedan misiones por hacer sigo entrenando
+        equipoPostMision.flatMap(_.entrenar(criterio, misionesRestantes))
+      else
+        equipoPostMision
+    }
   }
-
 }

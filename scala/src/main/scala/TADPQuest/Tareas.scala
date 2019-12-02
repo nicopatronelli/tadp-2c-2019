@@ -1,7 +1,6 @@
 package TADPQuest
 
-//trait Tarea extends (Heroe => Heroe)  { // Interfaz Tarea
-trait Tarea   { // Interfaz Tarea
+trait Tarea {
   def facilidad(heroe: Heroe, equipo: Equipo): Int
   // Me devuelve un nuevo heroe con los efectos producidos por realizar la tarea
   def serRealizadaPor(heroe: Heroe): Heroe
@@ -29,7 +28,7 @@ case class PelearContraMonstruo(hpAReducir: Int) extends Tarea {
 
 case object ForzarPuerta extends Tarea {
   override def facilidad(heroe: Heroe, equipo: Equipo): Int = {
-    val cantidadDeLadrones = equipo.integrantes.map{ _.trabajo}.map{
+    val cantidadDeLadrones = equipo.integrantes.map(_.trabajo).map {
       case Some(Ladron) => 1
       case _ => 0
     }.sum

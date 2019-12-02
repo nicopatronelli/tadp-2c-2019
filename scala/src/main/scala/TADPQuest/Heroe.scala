@@ -2,12 +2,10 @@ package TADPQuest
 
 case class Heroe(baseStats: Stats, trabajo: Option[Trabajo], inventario: Inventario = Inventario()) {
 
-  def stats: Stats = { // Modifica los stats base aplicando los modificadores con fold
-    val modificadores  = trabajo match {
-      case Some(trabajo) => List(trabajo, inventario)
-      case None => List(inventario)
-    }
-    // val modificadores: List[Modifier] = inventario :: trabajo.toList // Si el trabajo es None, trabajo.toList retorna una lista vacía
+  def stats: Stats = {
+    // Modifica los stats base aplicando los modificadores con fold
+    // Si el trabajo es None, trabajo.toList retorna una lista vacía
+    val modificadores: List[Modifier] = inventario :: trabajo.toList
     modificadores.foldLeft(baseStats) { (accum, modificador) => modificador.recalcularStats(accum, this) }
   }
 
@@ -39,23 +37,5 @@ case class Heroe(baseStats: Stats, trabajo: Option[Trabajo], inventario: Inventa
 
   def cantidadItemsEquipados: Int = inventario.cantidadDeItems
 
-  def incrementoDelStatPrincipalCon(item: Item): Int =
-    copy().agregarItem(item).valorStatPrincipal() - this.valorStatPrincipal()
-
-  /*
-    def diferenciaDeStats(otroHeroe: Heroe): Stats =
-      Stats(
-        stats.hp - otroHeroe.stats.hp,
-        stats.fuerza - otroHeroe.stats.fuerza,
-        stats.velocidad - otroHeroe.stats.velocidad,
-        stats.inteligencia - otroHeroe.stats.inteligencia
-      )
-  */
+  def incrementoDelStatPrincipalCon(item: Item): Int = agregarItem(item).valorStatPrincipal() - this.valorStatPrincipal()
 }
-
-
-
-
-
-
-
