@@ -2,7 +2,7 @@ package TADPQuest
 
 import scala.util.Try
 
-case class Mision(tareas: List[Tarea], recompensa: Recompensa)
+case class Mision(nombre: String, tareas: List[Tarea], recompensa: Recompensa)
 
 trait Recompensa
 case class CofreDeOro(cantidadDeOro: Int) extends Recompensa

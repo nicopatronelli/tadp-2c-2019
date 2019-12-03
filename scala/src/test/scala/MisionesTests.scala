@@ -10,6 +10,7 @@ class MisionesTests extends FlatSpec {
     val ladron: Heroe = Heroe(Stats(100, 10, 50, 70), Option(Ladron), Inventario())
     val equipo: Equipo = Equipo("MagoYGuerrero", List(mago, guerrero))
     val mision = Mision(
+      "Otra mision",
       tareas = List(PelearContraMonstruo(50), ForzarPuerta),
       recompensa = CofreDeOro(1000)
     )
@@ -44,6 +45,7 @@ class MisionesTests extends FlatSpec {
   "Los efectos producidos por varias tareas en una misma misión" should "acumularse" in {
     val equipoDeUno = Equipo("Solitario", List(fixture.ladron))
     val misionParaUnoSolo = Mision(
+      "Mision Para Uno Solo",
       List(PelearContraMonstruo(10), PelearContraMonstruo(20), ForzarPuerta, PelearContraMonstruo(50)),
       CofreDeOro(5000)
     )

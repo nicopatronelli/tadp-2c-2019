@@ -4,18 +4,22 @@ import scala.util.{Failure, Success, Try}
 
 object Taberna {
   val misionPeligrosa = Mision(
+    "Mision Peligrosa",
     List(PelearContraMonstruo(20), PelearContraMonstruo(30)),
     CofreDeOro(1000)
   )
   val misionFuerzaParaLosMagos = Mision(
+    "Mision Fuerza Para Los Magos",
     List(ForzarPuerta, RescatarPrincesa),
     IncrementarFuerzaALosMagos(200)
   )
   val misionParaLadronLider = Mision(
+    "Mision Para Ladron Lider",
     List(ForzarPuerta, RobarTalisman(TalismanMaldito)),
     NuevoItem(TalismanMaldito)
   )
   val misionLarga = Mision(
+    "Mision Larga",
     List(PelearContraMonstruo(10), ForzarPuerta, PelearContraMonstruo(40)),
     NuevoHeroe(Heroe(Stats(100, 50, 60, 120), Option(Mago), Inventario()))
   )
@@ -25,6 +29,7 @@ object Taberna {
   )
   // Otras misiones para tests
   val misionMasPeligrosa = Mision(
+    "Mision Mas Peligrosa",
     List(PelearContraMonstruo(40), ForzarPuerta, PelearContraMonstruo(50)),
     CofreDeOro(2000)
   )

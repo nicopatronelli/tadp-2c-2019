@@ -14,18 +14,18 @@ class TabernaTests extends FlatSpec {
 
   "Cuando el criterio es el de mayor pozo comun se" should "elegir la misionPeligrosa ya" +
     "que tiene recompensa de 1000 de oro (es la que mas oro da del tablon)" in {
-    val misionElegida: Mision = fixture.equipo.elegirMision((e1, e2) => e1.pozoComun > e2.pozoComun, tablon)
-    assert(misionElegida.equals(misionPeligrosa))
+    val misionElegida: Option[Mision] = fixture.equipo.elegirMision((e1, e2) => e1.pozoComun > e2.pozoComun, tablon)
+    assert(misionElegida.get.equals(misionPeligrosa))
   }
 
   "Cuando el criterio es el de la misión que mayor fuerza agrega a los magos se" should "elegir" +
     "la misionFuerzaParaLosMagos" in {
-    val misionElegida: Mision = fixture.equipo.elegirMision(
+    val misionElegida: Option[Mision] = fixture.equipo.elegirMision(
       (e1, e2) =>
         e1.integrantesQueTrabajanComo(Mago)(0).fuerza > e2.integrantesQueTrabajanComo(Mago)(0).fuerza,
       tablon
     )
-    assert(misionElegida.equals(misionFuerzaParaLosMagos))
+    assert(misionElegida.get.equals(misionFuerzaParaLosMagos))
   }
 
   "Si el entrenamiento es exitoso se" should "acumular las recompensas cobradas" in {
@@ -34,7 +34,6 @@ class TabernaTests extends FlatSpec {
     val equipoEntrenado = equipoConGuerreroLider.entrenar(
       (e1, e2) => e1.pozoComun > e2.pozoComun,
       List(misionPeligrosa, misionLarga, misionMasPeligrosa))
-    //println(s"El equipo entrenado es $equipoEntrenado")
     // misionPeligrosa da 1000 de oro y misionMasPeligrosa da 2000 de oro
     // misionLarga agrega un nuevo miembro, no da oro => 3000 de oro después de entrenar
     assert(equipoEntrenado.get.pozoComun.equals(3000))
@@ -51,6 +50,39 @@ class TabernaTests extends FlatSpec {
           NoSePuedeRealizarTareaException(RobarTalisman(TalismanMaldito)))
       )
     )
+  }
+
+  "Si el tablon de misiones está vacío, no" should "romper, sino devolver None" in {
+    val tablonVacio: List[Mision] = List()
+    val misionElegida = fixture.equipo.elegirMision((e1, e2) => e1.pozoComun > e2.pozoComun, tablonVacio)
+    assert(misionElegida.equals(None))
+  }
+
+  "El equipo" should "ordenar las misiones de acuerdo al criterio elegido" in {
+    val miTablon = List(misionPeligrosa, misionLarga, misionPeligrosa, misionMasPeligrosa, misionMasPeligrosa)
+    val misionesOrdenadas = fixture.equipo.ordenarMisiones((e1, e2) => e1.pozoComun > e2.pozoComun, miTablon)
+    val ordenEsperado = List(misionMasPeligrosa, misionMasPeligrosa, misionPeligrosa, misionPeligrosa, misionLarga)
+    assert(misionesOrdenadas.equals(ordenEsperado))
+//    println("El tablon original es: " + miTablon.map(_.nombre))
+//    println("Las misiones ordenadas quedan: " + misionesOrdenadas.map(_.nombre))
+  }
+
+  "Si no hay misiones que ordenar, se" should "dsad" in {
+    val miTablon = List()
+    val misionesOrdenadas = fixture.equipo.ordenarMisiones((e1, e2) => e1.pozoComun > e2.pozoComun, miTablon)
+    println("Las misiones ordenadas quedaron: " + misionesOrdenadas)
+    //assert(misionesOrdenadas.equals(None))
+    //    println("El tablon original es: " + miTablon.map(_.nombre))
+    //    println("Las misiones ordenadas quedan: " + misionesOrdenadas.map(_.nombre))
+  }
+
+  "Entrenar con lista vacia" should "dsad" in {
+    val miTablon = List()
+    val equipoEntrenado = fixture.equipo.entrenar((e1, e2) => e1.pozoComun > e2.pozoComun, miTablon)
+    println("Las misiones ordenadas quedaron: " + equipoEntrenado)
+    //assert(misionesOrdenadas.equals(None))
+    //    println("El tablon original es: " + miTablon.map(_.nombre))
+    //    println("Las misiones ordenadas quedan: " + misionesOrdenadas.map(_.nombre))
   }
 
 }
